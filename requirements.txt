@@ -1,6 +1,8 @@
 setuptools
 setuptools_git
 
+requests
+
 Flask
 pyyaml
 
