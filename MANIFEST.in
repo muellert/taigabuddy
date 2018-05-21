@@ -1,0 +1,5 @@
+include *.yaml
+include *.py
+include *.txt
+include *.cfg
+recursive-include src *.j2
