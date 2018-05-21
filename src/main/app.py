@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_login import LoginManager
 
 try:
     from flask_debugtoolbar import DebugToolbarExtension
@@ -7,6 +8,7 @@ except:
 # from flask import render_template
 # from flask import request
 # from flask import flash
+
 
 from .config import config
 
@@ -26,8 +28,11 @@ def genApp():
 
 
 app = genApp()
+app.config['SECRET_KEY'] = "qeljq.48au8<F3>4aeh2liqb3hed,a i38<F4><F5>0<F5>"
 toolbar = DebugToolbarExtension(app)
 
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 
 @app.route('/')

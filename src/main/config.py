@@ -6,9 +6,9 @@ configfile = "taigabuddy.yaml"
 
 
 class Config:
-    auth_url = None
-    api_url = None
-    DEBUG = True
+    """Load the configuration from a YAML file and set attributes
+       on an instance of this object.
+    """
 
     def load_config(self, configfile):
         """the config file is a YAML file the parameter is
@@ -22,17 +22,15 @@ class Config:
         return cf
 
     def setup(self, configfile):
-        # target = os.path.join(here, "..", configfile)
         config = self.load_config(configfile)
-        api_url = config['taiga']['api_url']
-        auth_url = config['taiga']['auth_url']
-        try:
-            debug = config['taiga']['debug']
-        except:
-            debug = False
-        self.DEBUG = debug
-        self.auth_url = auth_url
-        self.api_url = api_url
+        print("config from file: ", config)
+
+        if 'api_url' not in config or \
+           'auth_url' not in config:
+            raise ValueError("You must specify a Taiga instance to access")
+
+        for k, v in config.items():
+            self.__setattr__(k, v)
         return self
 
 config = Config()
