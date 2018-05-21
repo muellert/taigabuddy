@@ -3,14 +3,18 @@
 
 ---
 
-taiga:
-    api_url: http://localhost:8000/api/v1/
-    auth_url: http://localhost:8000/api/v1/auth
+# flask:
+DEBUG: True
+USE_SESSION_FOR_NEXT: True
 
-database:
-    dbhost: localhost
-    dbport: 5432
-    dbuser: taigabuddy
-    dbpass: taigabuddy
-    dbname: taigabuddy
+# taiga:
+api_url: http://localhost:8000/api/v1/
+auth_url: http://localhost:8000/api/v1/auth
+
+# database:
+db_host: localhost
+db_port: 5432
+db_user: taigabuddy
+db_pass: taigabuddy
+db_name: taigabuddy
 
