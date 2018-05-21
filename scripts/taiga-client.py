@@ -2,21 +2,16 @@
 
 import click
 
-from libconfig import setup
-from libconfig import authenticate
+from main.config import config
+from main.libtaiga import authenticate
 
 
 @click.command()
 @click.option('--u', 'username', default="admin", type=str)
-@click.option('--p', 'password', default="1231234", type=str)
+@click.option('--p', 'password', default="123123", type=str)
 # def main(username, password):
 def main(*args, **kw):
-    config = setup()
-    token = authenticate(config.auth_url, kw['username'], kw['password'])
-    if isinstance(token, str):
-        result = token
-    else:
-        result = token['_error_message']
+    result = authenticate(config.auth_url, kw['username'], kw['password'])
     print("result = ", result)
     return result
 
