@@ -1,0 +1,11 @@
+setuptools
+setuptools_git
+
+Flask
+pyyaml
+
+wtforms
+Flask_WTF
+
+psycopg2
+
