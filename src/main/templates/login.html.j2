@@ -6,8 +6,8 @@
   <h1>Log In</h1>
 
   <form action="/login" method="POST">
-    Username: <input type="text" size="20" name="username" /> <br />
-    Password: <input type="text" size="20" name="password" /> <br />
+    Username: <input type="text" size="20" name="username" value="{{ username }}" /> <br />
+    Password: <input type="text" size="20" name="password"  value="{{ password }}" /> <br />
     <input type="submit" value="Log In" />
   </form>
 {% endblock %}
