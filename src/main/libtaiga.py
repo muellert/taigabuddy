@@ -10,4 +10,3 @@ def authenticate(url, username, password):
     r = requests.post(url, data=payload)
     cooked = r.json()
     return cooked
-
