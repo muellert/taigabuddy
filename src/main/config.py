@@ -3,6 +3,7 @@ import yaml
 
 here = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../")
 configfile = "taigabuddy.yaml"
+configfile2 = "taigabuddy_local.yaml"
 
 
 class Config:
@@ -30,9 +31,13 @@ class Config:
             raise ValueError("You must specify a Taiga instance to access")
 
         for k, v in config.items():
-            self.__setattr__(k, v)
+            self.__setattr__(k.upper(), v)
         return self
 
 config = Config()
 
 config.setup(os.path.join(here, configfile))
+
+localconf = os.path.join(here, configfile2)
+if os.path.exists(localconf):
+    config.setup(localconf)
