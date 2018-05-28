@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    {% block head %}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title -%} Hello Bulma! {%- endblock %}</title>
+    <link rel="stylesheet" href="/static/css/bulma.min.css">
+    {% endblock %}
+  </head>
+  <body>
+    {% block body %}
+  <section class="section">
+    <div class="container">
+      {% block content %}
+      <h1 class="title">
+        Hello World
+      </h1>
+      <p class="subtitle">
+        My first website with <strong>Bulma</strong>!
+      </p>
+      {% endblock %}
+    </div>
+  </section>
+  {% endblock %}
+  </body>
+</html>
