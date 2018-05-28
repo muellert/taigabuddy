@@ -16,9 +16,14 @@
       <h1 class="title">
         Hello World
       </h1>
+      {% block flashmessage %}{% endblock %}
       <p class="subtitle">
         My first website with <strong>Bulma</strong>!
       </p>
+      {% endblock %}
+      {% block debugmsg %}
+      <hr />
+      {{ debugmsg | default('') }}
       {% endblock %}
     </div>
   </section>
