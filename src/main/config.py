@@ -11,7 +11,10 @@ class Config:
        on an instance of this object.
     """
 
-    def load_config(self, configfile):
+    def __init__(self):
+        self.config = {}
+
+    def _load_config(self, configfile):
         """the config file is a YAML file the parameter is
         either an open file handle, or it is a string
         pointing to the configuration file.
@@ -23,16 +26,14 @@ class Config:
         return cf
 
     def setup(self, configfile):
-        config = self.load_config(configfile)
-        print("config from file: ", config)
-
+        config = self._load_config(configfile)
         if 'api_url' not in config or \
            'auth_url' not in config:
             raise ValueError("You must specify a Taiga instance to access")
-
         for k, v in config.items():
-            self.__setattr__(k.upper(), v)
-        return self
+            u = k.upper()
+            self.__setattr__(u, v)
+
 
 config = Config()
 
