@@ -5,25 +5,39 @@
     {% block head %}
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title -%} Hello Bulma! {%- endblock %}</title>
-    <link rel="stylesheet" href="/static/css/bulma.min.css">
+    <link rel="stylesheet" href="/static/css/bulma.css">
     {% endblock %}
   </head>
   <body>
     {% block body %}
   <section class="section">
+    {% block profile_links %}
+    <div class="profile_links">{{ profile_links }}
+    {% endblock %}
     <div class="container">
-      {% block content %}
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+      <ul class="flashes">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% endwith %}
+    {% block content %}
       <h1 class="title">
         Hello World
       </h1>
-      {% block flashmessage %}{% endblock %}
       <p class="subtitle">
         My first website with <strong>Bulma</strong>!
       </p>
       {% endblock %}
-      {% block debugmsg %}
+      {% block debug_message %}
       <hr />
-      {{ debugmsg | default('') }}
+      Debug output:<br />
+      <hr />
+      {{ debug_message | default('') }}
+      <hr />
       {% endblock %}
     </div>
   </section>
