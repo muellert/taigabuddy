@@ -1,4 +1,9 @@
 from flask import Flask
+from flask import session
+from flask import request
+from flask import redirect
+from flask import url_for
+
 
 has_DTB = False
 try:
@@ -23,8 +28,9 @@ def create_app(config={}, environment=None):
         pass
     return app
 
-# app = create_app(config=config.data())
+
 app = create_app(config=config)
+
 
 app.config['SECRET_KEY'] = "qeljq.48au8<F3>4aeh2liqb3hed,a i38<F4><F5>0<F5>"
 
@@ -32,7 +38,10 @@ User.set_url(app.config['AUTH_URL'])
 
 @app.route('/')
 def main():
-    return "Hello World"
+    u = request.cookies['username']
+    if u is None:
+        redirect(url_for('login'))
+    return "Hello %s" % session[u]['full_name']
 
 
 # if has_DTB is True:
