@@ -33,11 +33,13 @@
       </p>
       {% endblock %}
       {% block debug_message %}
+      {% if debug_message %}
       <hr />
       Debug output:<br />
       <hr />
       {{ debug_message | default('') }}
       <hr />
+      {% endif %}
       {% endblock %}
     </div>
   </section>
