@@ -8,8 +8,8 @@ from flask import url_for
 has_DTB = False
 try:
     from flask_debugtoolbar import DebugToolbarExtension
-    # toolbar = DebugToolbarExtension()
-    # has_DTB = True
+    toolbar = DebugToolbarExtension()
+    has_DTB = True
 except:
     pass
 
@@ -38,11 +38,13 @@ User.set_url(app.config['AUTH_URL'])
 
 @app.route('/')
 def main():
-    u = request.cookies['username']
-    if u is None:
+    u = None
+    try:
+        u = request.cookies['username']
+    except:
         redirect(url_for('login'))
     return "Hello %s" % session[u]['full_name']
 
 
-# if has_DTB is True:
-#    toolbar.init_app(app)
+if has_DTB is True:
+    toolbar.init_app(app)
