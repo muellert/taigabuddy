@@ -1,6 +1,12 @@
 from flask import session
 from flask import request
 from flask import render_template
+from flask import current_app
+from flask import url_for
+from flask import flash
+from flask import make_response
+from flask import redirect
+from flask import abort
 from flask.views import View
 
 
@@ -20,7 +26,8 @@ class User:
         self.username = username
         data = authenticate(auth_url, username, password)
         if '_error_message' in data:
-            raise ValueError("user %s: %s" % (username, data['_error_message']))
+            raise ValueError("user %s: %s" % (username,
+                                              data['_error_message']))
         else:
             self.data = data
 
@@ -48,6 +55,23 @@ class LoginView(View):
 
     def dispatch_request(self):
         context = {'username': "", 'password': ''}
-        # import pdb; pdb.set_trace()
-        context.update(request.values.to_dict())
-        return self.render_template(context)
+        response = None
+        if request.method == 'POST':
+            context.update(request.values.to_dict())
+            r = authenticate(current_app.config['AUTH_URL'],
+                             context['username'],
+                             context['password'])
+            print("after authentication: ", r)
+            if r is not None:
+                print("updating context")
+                flash("User %s logged in" % r['full_name'])
+                context['debug_message'] = str(r)
+                uuid = r['uuid']
+                session[uuid] = r
+                response = make_response(self.render_template(context))
+                response.set_cookie('username', uuid)
+            else:
+                abort(401)
+        if not response:
+            response = make_response(self.render_template(context))
+        return response
