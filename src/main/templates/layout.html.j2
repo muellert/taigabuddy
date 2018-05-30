@@ -6,43 +6,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title -%} Hello Bulma! {%- endblock %}</title>
     <link rel="stylesheet" href="/static/css/bulma.css">
+    <link rel="stylesheet" href="/static/css/taigabuddy.css">
     {% endblock %}
   </head>
   <body>
     {% block body %}
-  <section class="section">
-    {% block profile_links %}
-    <div class="profile_links">{{ profile_links }}
-    {% endblock %}
-    <div class="container">
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-      <ul class="flashes">
-        {% for message in messages %}
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+      <div class="navbar-brand">
+	<!-- navbar items, navbar burger... -->
+	<div class="navbar-menu is-active">
+	  <!-- navbar start, navbar end -->
+	  {% block profile_links %}
+	  <div class="profile_links">{{ profile_links }}</div>
+	  {% endblock %}
+	  <span>
+	    <a style="float: right;"
+	       href="{{ url_for("login") }}">Log In </a></span>
+	</div>
+      </div>
+    </nav>
+    <section class="section">
+      <div class="container">
+	{% with messages = get_flashed_messages() %}
+	{% if messages %}
+	<ul class="flashes">
+          {% for message in messages %}
           <li>{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-    {% endwith %}
-    {% block content %}
-      <h1 class="title">
-        Hello World
-      </h1>
-      <p class="subtitle">
-        My first website with <strong>Bulma</strong>!
-      </p>
-      {% endblock %}
-      {% block debug_message %}
-      {% if debug_message %}
-      <hr />
-      Debug output:<br />
-      <hr />
-      {{ debug_message | default('') }}
-      <hr />
-      {% endif %}
-      {% endblock %}
-    </div>
-  </section>
-  {% endblock %}
+          {% endfor %}
+	</ul>
+	{% endif %}
+	{% endwith %}
+	{% block content %}
+	<h1 class="title">
+          Hello World
+	</h1>
+	<p class="subtitle">
+          My first website with <strong>Bulma</strong>!
+	</p>
+	{% endblock %}
+	{% block debug_message %}
+	{% if debug_message %}
+	<hr />
+	Debug output:<br />
+	<hr />
+	{{ debug_message | default('') }}
+	<hr />
+	{% endif %}
+	{% endblock %}
+      </div>
+    </section>
+    {% endblock %}
   </body>
 </html>
