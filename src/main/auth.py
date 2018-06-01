@@ -7,8 +7,10 @@ from flask import flash
 from flask import make_response
 from flask import redirect
 from flask import abort
+from flask import g
 from flask.views import View
 from .libtaiga import authenticate
+from .libutils import set_username_cookie
 
 
 class User:
@@ -19,9 +21,9 @@ class User:
     """
     auth_url = None
 
-    def __init__(self, username, password):
+    def __init__(self, url, username, password):
         self.username = username
-        data = authenticate(auth_url, username, password)
+        data = authenticate(url, username, password)
         if '_error_message' in data:
             raise ValueError("user %s: %s" % (username,
                                               data['_error_message']))
@@ -38,6 +40,10 @@ class User:
     @classmethod
     def set_url(cls, url):
         cls.auth_url = url
+
+    @property
+    def token(self):
+        return self.data['auth_token']
 
 
 class LoginView(View):
@@ -58,14 +64,15 @@ class LoginView(View):
             r = authenticate(current_app.config['AUTH_URL'],
                              context['username'],
                              context['password'])
-            print("after authentication: ", r)
+            # print("after authentication: ", r)
             if r is not None:
                 flash("User %s logged in" % r['full_name'])
                 context['debug_message'] = str(r)
                 uuid = r['uuid']
                 session[uuid] = r
+                g.user = r['username']
                 response = make_response(self.render_template(context))
-                response.set_cookie('username', uuid)
+                set_username_cookie(response, uuid)
             else:
                 abort(401)
         if not response:
@@ -99,5 +106,5 @@ class LogoutView(View):
             flash("You were not logged in, anyway")
         response = make_response(self.render_template(context))
         # delete the cookie:
-        response.set_cookie('username', '', 0)
+        set_username_cookie(response, '', 0)
         return response
