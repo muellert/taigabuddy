@@ -20,8 +20,14 @@
 	  <div class="profile_links">{{ profile_links }}</div>
 	  {% endblock %}
 	  <span>
+	    {% if g.get('user', None) %}
 	    <a style="float: right;"
-	       href="{{ url_for("login") }}">Log In </a></span>
+	       href="{{ url_for("logout") }}">Log Out</a>
+	    {% else %}
+	    <a style="float: right;"
+	       href="{{ url_for("login") }}">Log In</a>
+	    {% endif %}
+	  </span>
 	</div>
       </div>
     </nav>
