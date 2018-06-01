@@ -8,7 +8,7 @@ DEBUG: True
 USE_SESSION_FOR_NEXT: True
 
 # taiga:
-api_url: http://localhost:8000/api/v1/
+api_url: http://localhost:8000/api/v1
 auth_url: http://localhost:8000/api/v1/auth
 
 # database:
