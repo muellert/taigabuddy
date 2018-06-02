@@ -5,16 +5,14 @@ def test_api_get_projects():
     """
     import requests as req
     from main import app
-    from main.taiga import TaigaGlobal
+    from main import tc
     username = 'admin'
     password = '123123'
     api = app.config['API_URL']
     with app.test_request_context():
-        tg = TaigaGlobal(app)
-        tg.login(username, password)
-        assert tg is not None
-        res = tg.get(api + "/projects")
+        tc.login(username, password)
+        res = tc.get(api + "/projects")
         assert res is not None
         print("len(result): ", len(res.json()))
         print("result: ", res.json())
-        print("current user: ", tg.user.name)
+        print("current user: ", tc.user.name)
