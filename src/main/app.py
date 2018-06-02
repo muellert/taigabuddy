@@ -13,8 +13,10 @@ try:
 except:
     pass
 
+
 from .config import config
 from .auth import User
+from .taiga import TaigaGlobal
 
 
 ### The Factory:
@@ -34,6 +36,8 @@ app = create_app(config=config)
 app.config['SECRET_KEY'] = "qeljq.48au8<F3>4aeh2liqb3hed,a i38<F4><F5>0<F5>"
 
 User.set_url(app.config['AUTH_URL'])
+
+taiga_client = TaigaGlobal(app)
 
 
 @app.route('/')
