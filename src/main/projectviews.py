@@ -7,13 +7,16 @@ from flask import flash
 from flask import make_response
 from flask import redirect
 from flask import abort
+from flask import g
 from flask.views import MethodView
-from .libtaiga import authenticate
+from .taiga import TaigaGlobal
+from .auth import current_user
+from .libutils import get_user_uuid
 from .libutils import get_user_authtoken
 from .libutils import set_username_cookie
 
 
-class ProjectView(MethodView):
+class ProjectListView(MethodView):
 
     def __init__(self, template_name):
         self.template_name = template_name
@@ -22,6 +25,14 @@ class ProjectView(MethodView):
         return render_template(self.template_name, **context)
 
     def get(self):
-        response = make_response(self.render_template())
-        set_username_cookie('username', uuid)
+        context = {}
+        user = g.user
+        api = current_app.config.get('API_URL')
+        token = user.token
+        pl = (api, token)
+        context['projects'] = pl
+        response = make_response(self.render_template(context))
+        print("uuid: ", uuid, ", response: ", response)
+        # import pdb; pdb.set_trace()
+        # set_username_cookie(response, uuid)
         return response
