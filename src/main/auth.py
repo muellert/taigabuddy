@@ -1,3 +1,4 @@
+import requests
 from flask import session
 from flask import request
 from flask import render_template
@@ -9,8 +10,12 @@ from flask import redirect
 from flask import abort
 from flask import g
 from flask.views import View
-from .libtaiga import authenticate
 from .libutils import set_username_cookie
+
+
+class TaigaAuthProblem(Exception):
+    def __init__(self, orig):
+        self.e_data = orig
 
 
 class User:
@@ -18,32 +23,76 @@ class User:
 
        A user in this context is the JSON result returned from
        successfully authenticating against Taiga.
+
+       Relies on the session for storing the user data
     """
     auth_url = None
 
-    def __init__(self, url, username, password):
+    def login(self, username, password):
         self.username = username
-        data = authenticate(url, username, password)
+        data = None
+        if username in session:
+            if  (session[username] is None or
+                 '_error_message' in session[username]):
+                data = self.authenticate(self.auth_url, username, password)
+            else:
+                data = session['username']
+        else:
+            data = self.authenticate(self.auth_url, username, password)
         if '_error_message' in data:
-            raise ValueError("user %s: %s" % (username,
-                                              data['_error_message']))
+            raise TaigaAuthProblem(data)
         else:
             self.data = data
+        session[username] = data
+
+    def authenticate(self, url, username, password):
+        """authenticate against a Taiga instance"""
+        payload = {"username": username,
+                   "password": password,
+                   "type": "normal"
+                   }
+        r = requests.post(url, data=payload)
+        cooked = r.json()
+        return cooked
 
     @property
     def is_authenticated(self):
-        return True
+        return self.data['username'] in session
 
     def get_id(self):
-        return self.data['uuid']
+        return session[self.data['username']]
+
+    @property
+    def token(self):
+        return self.data['auth_token']
+
+    @property
+    def name(self):
+        return self.data['username']
 
     @classmethod
     def set_url(cls, url):
         cls.auth_url = url
 
-    @property
-    def token(self):
-        return self.data['auth_token']
+
+def current_user():
+    return g.user
+
+
+def user_factory(username, password):
+    """return a User object - either a new one, or a reference to
+       one which already passed authentication
+    """
+    if username in session:
+        return session[username]
+    else:
+        u = User()
+        u.login(username, password)
+        if '_error_message' in u.data:
+            return None
+        session[u.username] = u
+        g.user = u
+        return u
 
 
 class LoginView(View):
