@@ -1,5 +1,5 @@
 from .app import app
-from .app import taiga_client
+from .app import taiga_client as tc
 from .auth import LoginView
 from .auth import LogoutView
 from .projectviews import ProjectListView
