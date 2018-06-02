@@ -1,0 +1,16 @@
+{% extends "layout.html.j2" %}
+{% block title %}Project List{% endblock %}
+
+
+{% block content %}
+
+  <h1>Project List</h1>
+  <div class="projectlist">
+  <ul>
+  {% for proj in projects %}
+  <li>{{ proj }}</li>
+  {% endfor %}
+  </ul>  
+  </div>
+
+{% endblock %}
