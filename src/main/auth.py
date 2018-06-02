@@ -9,6 +9,7 @@ from flask import make_response
 from flask import redirect
 from flask import abort
 from flask import g
+import json
 from flask.views import View
 from .libutils import set_username_cookie
 
@@ -27,6 +28,10 @@ class User:
        Relies on the session for storing the user data
     """
     auth_url = None
+
+    def __init__(self, data=None, url=None):
+        self.auth_url = self.auth_url or url
+        self.data = data
 
     def login(self, username, password):
         self.username = username
@@ -67,12 +72,19 @@ class User:
         return self.data['auth_token']
 
     @property
+    def uuid(self):
+        return self.data['uuid']
+
+    @property
     def name(self):
         return self.data['username']
 
     @classmethod
     def set_url(cls, url):
         cls.auth_url = url
+
+    def as_dict(self):
+        return dict(data=self.data, _auth_url=self.auth_url)
 
 
 def current_user():
@@ -110,16 +122,12 @@ class LoginView(View):
         response = None
         if request.method == 'POST':
             context.update(request.values.to_dict())
-            r = authenticate(current_app.config['AUTH_URL'],
-                             context['username'],
-                             context['password'])
-            # print("after authentication: ", r)
-            if r is not None:
-                flash("User %s logged in" % r['full_name'])
-                context['debug_message'] = str(r)
-                uuid = r['uuid']
-                session[uuid] = r
-                g.user = r['username']
+            u = user_factory(context['username'], context['password'])
+            if u is not None:
+                flash("User %s logged in" % u.name)
+                context['debug_message'] = str(u)
+                uuid = u.uuid
+                g.user = u.name
                 response = make_response(self.render_template(context))
                 set_username_cookie(response, uuid)
             else:

@@ -1,4 +1,5 @@
 from flask import Flask
+from flask import json
 from flask import session
 from flask import request
 from flask import redirect
@@ -19,6 +20,14 @@ from .auth import User
 from .taiga import TaigaGlobal
 
 
+class TBJsonEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, User):
+            return o.as_dict()
+        else:
+            return json.JSONEncoder.default(self, o)
+
+
 ### The Factory:
 def create_app(config={}, environment=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -34,6 +43,8 @@ def create_app(config={}, environment=None):
 app = create_app(config=config)
 
 app.config['SECRET_KEY'] = "qeljq.48au8<F3>4aeh2liqb3hed,a i38<F4><F5>0<F5>"
+
+app.json_encoder = TBJsonEncoder
 
 User.set_url(app.config['AUTH_URL'])
 
