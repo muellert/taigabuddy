@@ -20,9 +20,11 @@ class BaseTaigaClient:
         # print("BaseTaigaClient.init_app(), self = ", dir(self))
         app.taiga_client = self
 
-    def login(self, username):
+    def login(self, username, password=None):
         u = user_factory(username)
         assert u is not None
+        if u.is_anonymous:
+            u.login(username, password)
         self.user = u
         self.token = u.token
 
