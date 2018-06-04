@@ -1,8 +1,11 @@
+from flask import url_for
 from .app import app
 from .app import taiga_client as tc
 from .auth import LoginView
 from .auth import LogoutView
+from .auth import login_manager
 from .projectviews import ProjectListView
+from .projectviews import ProjectIssuesListView
 
 app.add_url_rule('/login', view_func=LoginView.as_view(
     'login', template_name='login.html.j2'))
@@ -10,7 +13,13 @@ app.add_url_rule('/login', view_func=LoginView.as_view(
 app.add_url_rule('/logout', view_func=LogoutView.as_view(
     'logout', template_name='logout.html.j2'))
 
+with app.app_context():
+    login_manager.login_view = url_for("login")
+    login_manager.logout_view = url_for("logout")
+
 app.add_url_rule('/projects', view_func=ProjectListView.as_view(
     'project_list', template_name='projectlist.html.j2'))
 
+app.add_url_rule('/projects/<int:pid>/issues', view_func=ProjectIssuesListView.as_view(
+    'project_issue_list', template_name='issueslist.html.j2'))
 
