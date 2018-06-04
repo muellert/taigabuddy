@@ -11,3 +11,4 @@ Flask_WTF
 
 psycopg2
 
+plotly
