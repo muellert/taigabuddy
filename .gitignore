@@ -45,6 +45,7 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *,cover
+.pytest_cache/
 
 # Translations
 *.mo
@@ -73,6 +74,7 @@ Session.vim
 
 # ---> Linux
 *~
+*.bak
 
 # KDE directory preferences
 .directory
