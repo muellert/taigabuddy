@@ -115,7 +115,8 @@ class TaigaIssueCustomFields:
         elif field_type == 'timedelta':
             return timedelta()
         else:
-            raise ValueError("Unknown field name %s" % fieldname)
+            # raise ValueError("Unknown field name %s" % fieldname)
+            return None
 
     def sanity_check(self):
         fieldnames = self.field_type_map.keys()
@@ -129,6 +130,8 @@ class TaigaIssueCustomFields:
            definitions above
         """
         d = self.get_default(name)
+        if d is None:
+            return None
         v = None
         if isinstance(d, timedelta):
             # needs proper parsing for days and hours
@@ -175,7 +178,8 @@ class TaigaIssue(TaigaIssueCustomFields):
     def __getattr__(self, attr):
         if attr in self.data:
             return self.data[attr]
-        raise
+        # raise - don't do that until we know that an exception was going on
+        return None
 
     def index_to_field(self, s_index):
         """calculate the field name for the given index
