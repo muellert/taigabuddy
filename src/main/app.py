@@ -5,7 +5,6 @@ from flask import request
 from flask import redirect
 from flask import url_for
 
-
 has_DTB = False
 try:
     from flask_debugtoolbar import DebugToolbarExtension
@@ -17,6 +16,7 @@ except:
 
 from .config import config
 from .auth import User
+from .auth import login_manager
 from .taiga import TaigaGlobal
 
 
@@ -32,7 +32,10 @@ class TBJsonEncoder(json.JSONEncoder):
 def create_app(config={}, environment=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config['ENVIRONMENT'] = environment
+    if not app.config['SERVER_NAME']:
+        app.config['SERVER_NAME'] = 'localhost:5000'
     app.config.from_object(config)
+    login_manager.init_app(app)
     try:
         app.config.from_envvar('TAIGABUDDY_SETTINGS')
     except:
@@ -48,7 +51,8 @@ app.json_encoder = TBJsonEncoder
 
 User.set_url(app.config['AUTH_URL'])
 
-taiga_client = TaigaGlobal(app)
+taiga_client = TaigaGlobal()
+taiga_client.init_app(app)
 
 
 @app.route('/')
@@ -57,8 +61,12 @@ def main():
     try:
         u = request.cookies['username']
     except:
+        print("redirect to ", url_for('login'))
+    if u not in session:
         redirect(url_for('login'))
-    return "Hello %s" % session[u]['full_name']
+    return "Hello! session = " + str(session)
+
+# [u]['data']['full_name']
 
 
 if has_DTB is True:

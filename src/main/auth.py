@@ -9,9 +9,15 @@ from flask import make_response
 from flask import redirect
 from flask import abort
 from flask import g
-import json
+from flask_login import LoginManager
+from flask_login import login_user, logout_user
+
+
 from flask.views import View
 from .libutils import set_username_cookie
+
+
+login_manager = LoginManager()
 
 
 class TaigaAuthProblem(Exception):
@@ -25,30 +31,39 @@ class User:
        A user in this context is the JSON result returned from
        successfully authenticating against Taiga.
 
-       Relies on the session for storing the user data
+       Relies on flask_login for storing the user data
     """
     auth_url = None
 
-    def __init__(self, data=None, url=None):
-        self.auth_url = self.auth_url or url
-        self.data = data
+    def __init__(self, data={}, url=None):
+        # print("User.__init__: data = ", data)
+        if 'data' in data:
+            self.data = data['data']
+        else:
+            self.data = data
+        self.auth_url = url or self.auth_url or data['auth_url'] or ''
+        if 'is_active' in self.data:
+            self.is_active = data['is_active']
+        else:
+            self.is_active = False
 
     def login(self, username, password):
         self.username = username
         data = None
-        if username in session:
-            if  (session[username] is None or
-                 '_error_message' in session[username]):
-                data = self.authenticate(self.auth_url, username, password)
-            else:
-                data = session['username']
-        else:
-            data = self.authenticate(self.auth_url, username, password)
-        if '_error_message' in data:
+        if not self.is_active:
+             data = self.authenticate(self.auth_url, username, password)
+        # print("User.login(): data: ", data)
+        if getattr(data, '_error_message', None):
             raise TaigaAuthProblem(data)
         else:
+            self.is_active = True
             self.data = data
-        session[username] = data
+        # print("User.login(): is_authenticated: ", self.is_authenticated)
+        session[self.data['uuid']] = self.data['username']
+        session[self.data['username']] = self.data
+        session['username'] = self.data['username']
+        g.user = self
+        return self
 
     def authenticate(self, url, username, password):
         """authenticate against a Taiga instance"""
@@ -58,53 +73,79 @@ class User:
                    }
         r = requests.post(url, data=payload)
         cooked = r.json()
+        # print("auth.User.authenticate(): result = ", cooked)
+        # self.data = cooked
         return cooked
 
     @property
     def is_authenticated(self):
-        return self.data['username'] in session
+        return self.is_active
+
+    @property
+    def is_anonymous(self):
+        return not self.is_active
 
     def get_id(self):
-        return session[self.data['username']]
+        # print("User.get_id(): self = ", self.data['uuid'])
+        return self.data['uuid']
 
     @property
     def token(self):
         return self.data['auth_token']
 
     @property
-    def uuid(self):
-        return self.data['uuid']
-
-    @property
     def name(self):
-        return self.data['username']
+        # print("User.name(): self.data.name = ", self.data['full_name_display'])
+        return self.data['full_name_display']
 
     @classmethod
     def set_url(cls, url):
         cls.auth_url = url
 
     def as_dict(self):
-        return dict(data=self.data, _auth_url=self.auth_url)
+        return dict(data=self.data,
+                    _auth_url=self.auth_url,
+                    is_active=self.is_active)
 
 
-def current_user():
-    return g.user
+def current_user(username=None):
+    result = None
+    try:
+        u = g.user
+        print("current_user: found ", u.data['uuid'])
+        result = u
+    except:
+        print("current_user: nothing found")
+        u = user_factory(username)
+        result = u
+    return result
 
 
-def user_factory(username, password):
+@login_manager.user_loader
+def user_factory(username):
     """return a User object - either a new one, or a reference to
        one which already passed authentication
     """
-    if username in session:
-        return session[username]
+    result = None
+    print("==> user_factory(%s) called" % username)
+    if getattr(g, 'user', None):
+        # print("user_factory: g = ", dir(g))
+        if 'user' in g:
+            print("g.user = ", g.user.name)
+        u = g.user
+        if u.data['uuid'] == username:
+            result = u
     else:
-        u = User()
-        u.login(username, password)
-        if '_error_message' in u.data:
-            return None
-        session[u.username] = u
-        g.user = u
-        return u
+        print("--> user_factory(): no g.user object")
+        if username in session:
+            print("--> user_factory(): reloading user from session")
+            # print("--> user_factory(): user = ", session[username])
+            try:
+                result = User(data=session[session[username]])
+            except:
+                result = User(data=session[username])
+            g.user = result
+    return result
 
 
 class LoginView(View):
@@ -122,23 +163,35 @@ class LoginView(View):
         response = None
         if request.method == 'POST':
             context.update(request.values.to_dict())
-            u = user_factory(context['username'], context['password'])
+            u = User()
+            u.login(context['username'], context['password'])
             if u is not None:
+                print("LoginView.dispatch: before login_user():")
+                # print("g = ", dir(g))
+                if 'user' in g:
+                    print("g.user = ", g.user)
+                # print("session = ", session)
+                login_user(u)
                 flash("User %s logged in" % u.name)
                 context['debug_message'] = str(u)
-                uuid = u.uuid
-                g.user = u.name
+                g.user = u
                 response = make_response(self.render_template(context))
-                set_username_cookie(response, uuid)
+                set_username_cookie(response, u.data['uuid'])
             else:
                 abort(401)
+            if 'next' in session:
+                url = session['next']
+                print("session has a next url: ", url)
+                redirect(url)
+            else:
+                print("session has NO next url")
         if not response:
             response = make_response(self.render_template(context))
         return response
 
 
 class LogoutView(View):
-    """Log the current user out by deleting his session entry
+    """Log the current user out by calling flask_login's method
        and unsetting his cookie.
     """
     methods = ("GET", "POST")
@@ -154,14 +207,11 @@ class LogoutView(View):
         context = {'username': "anonymous user"}
         response = None
         try:
-            # import pdb; pdb.set_trace()
             u = request.cookies.get('username', None)
-            current_app.logger.info("user: %s" % u)
-            context = {'username': session[u]['full_name']}
-            del session[u]
+            current_app.logger.info("user: ", u)
+            logout_user()
         except:
             flash("You were not logged in, anyway")
         response = make_response(self.render_template(context))
-        # delete the cookie:
-        set_username_cookie(response, '', 0)
+        # set_username_cookie(response, '', 0)
         return response
