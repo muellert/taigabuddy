@@ -24,3 +24,18 @@ def test_api_get_projects():
         print("len(result): ", len(res.json()))
         print("result: ", res.json())
         print("current user: ", tc.user.name)
+
+
+def test_get_issues():
+    """get the issues list for the project with id '2',
+       which is where we have added the fields for dependency
+       checking
+    """
+    import requests as req
+    from main import app
+    from main import tc
+    api = taiga_login()
+    with app.test_request_context():
+        res = tc.get(api + "/issues?project=2")
+        # import pdb; pdb.set_trace()
+        assert res
