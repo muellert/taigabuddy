@@ -8,8 +8,10 @@ def test_admin_login():
     from main.auth import User, user_factory
     User.set_url(app.config['AUTH_URL'])
     with app.test_request_context():
-        u = user_factory("admin", "123123")
+        u = user_factory("admin")
         assert u
+        u.login("admin", "123123")
+        assert u.is_authenticated
 
 
 def test_login_view():
