@@ -73,7 +73,7 @@ class ProjectIssuesListView(MethodView):
             issue_cav = tc.get_issue_custom_attribute_values(issue.id)
             if issue_cav:
                 issue.update(issue_cav)
-        context['dependencies'] = calculate_dependencies(cal, il)
+        context['dependencies'] = calculate_dependencies(il)
         context['projectid'] = pid
         response = make_response(self.render_template(context))
         # print("uuid: ", user.get_id(), ", response: ", response)

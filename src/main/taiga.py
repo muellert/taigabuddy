@@ -197,7 +197,7 @@ class TaigaGlobal(BaseTaigaClient):
         return a_v['attributes_values']
 
 
-def calculate_dependencies(custom_fields, issue_list):
+def calculate_dependencies(issue_list):
     """Calculate a dependency graph for the items given in the list 'l'
 
        The items need to have a field 'depends_on'
