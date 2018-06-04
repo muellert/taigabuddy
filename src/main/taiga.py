@@ -49,6 +49,48 @@ class BaseTaigaClient:
         return requests.post(url, **kwargs, headers=hdrs)
 
 
+class TaigaGlobal(BaseTaigaClient):
+
+    def autologin(self):
+        if not self.logged_in:
+            # print("TaigaGlobal.get_projects(): session = ", session)
+            self.login(session['user_id'])
+
+    def get_projects(self):
+        """get all projects visible to the user described by 'auth'"""
+        self.autologin()
+        r = super().get(self.api + '/projects', )
+        return r.json()
+
+    def get_issues(self, pid):
+        """get all issues for the given project"""
+        self.autologin()
+        r = super().get(self.api + '/issues?project=%d' % pid, )
+        self.get_issue_custom_attributes(pid)
+        return [TaigaIssue(data=element) for element in r.json()]
+
+    def get_issue_custom_attributes(self, pid):
+        """get custom attributes for issues for the given project"""
+        self.autologin()
+        r = super().get(self.api + '/issue-custom-attributes')
+        cal = r.json()
+        print("---TaigaGlobal.get_issue_custom_attributes(): cal=", cal)
+        result = [field for field in cal if field['project'] == pid]
+        print("TaigaGlobal.get_issue_custom_attributes(): result=", result)
+        return result
+
+    def get_issue_custom_attribute_values(self, issue_id):
+        """get the custom values for the given issue id"""
+        self.autologin()
+        print("get_issue_custom_attribute_values(%d)" % issue_id)
+        r = super().get(self.api + '/issues/custom-attributes-values/%d' % issue_id)
+        a_v = r.json()
+        print("custom attributes for issue %d: " % issue_id, a_v)
+        if a_v['attributes_values'] == {}:
+            return None
+        return a_v['attributes_values']
+
+
 class TaigaIssueCustomFields:
     """encapsulate the data types for the various custom fields
 
@@ -72,6 +114,13 @@ class TaigaIssueCustomFields:
             return timedelta()
         else:
             raise ValueError("Unknown field name %s" % fieldname)
+
+    def sanity_check(self):
+        fieldnames = self.field_type_map.keys()
+        result = True
+        for f in fieldnames:
+            result = result and f in self.data
+        return result
 
     def string_to_value(self, name, s_value):
         """convert string to the given type according to the
@@ -150,51 +199,13 @@ class TaigaIssue(TaigaIssueCustomFields):
             field_value = self.string_to_value(fieldname, s_value)
             self.data[fieldname] = field_value
 
+    def calculate_ETA(self, start_date=None):
+        """calculate an estimated ETA"""
+
+
     @property
     def id(self):
         return self.data['id']
-
-
-class TaigaGlobal(BaseTaigaClient):
-
-    def autologin(self):
-        if not self.logged_in:
-            # print("TaigaGlobal.get_projects(): session = ", session)
-            self.login(session['user_id'])
-
-    def get_projects(self):
-        """get all projects visible to the user described by 'auth'"""
-        self.autologin()
-        r = super().get(self.api + '/projects', )
-        return r.json()
-
-    def get_issues(self, pid):
-        """get all issues for the given project"""
-        self.autologin()
-        r = super().get(self.api + '/issues?project=%d' % pid, )
-        self.get_issue_custom_attributes(pid)
-        return [TaigaIssue(data=element) for element in r.json()]
-
-    def get_issue_custom_attributes(self, pid):
-        """get custom attributes for issues for the given project"""
-        self.autologin()
-        r = super().get(self.api + '/issue-custom-attributes')
-        cal = r.json()
-        print("---TaigaGlobal.get_issue_custom_attributes(): cal=", cal)
-        result = [field for field in cal if field['project'] == pid]
-        print("TaigaGlobal.get_issue_custom_attributes(): result=", result)
-        return result
-
-    def get_issue_custom_attribute_values(self, issue_id):
-        """get the custom values for the given issue id"""
-        self.autologin()
-        print("get_issue_custom_attribute_values(%d)" % issue_id)
-        r = super().get(self.api + '/issues/custom-attributes-values/%d' % issue_id)
-        a_v = r.json()
-        print("custom attributes for issue %d: " % issue_id, a_v)
-        if a_v['attributes_values'] == {}:
-            return None
-        return a_v['attributes_values']
 
 
 def calculate_dependencies(issue_list):
