@@ -125,26 +125,36 @@ def current_user(username=None):
 def user_factory(username):
     """return a User object - either a new one, or a reference to
        one which already passed authentication
+
+       If the User object is new, then it is an anonymous user
+       and will not be added to the session, or to 'g'.
     """
     result = None
     print("==> user_factory(%s) called" % username)
-    if getattr(g, 'user', None):
+    u = getattr(g, 'user', None)
+    if u:
         # print("user_factory: g = ", dir(g))
-        if 'user' in g:
-            print("g.user = ", g.user.name)
-        u = g.user
+        print("g.user = ", g.user.name)
         if u.data['uuid'] == username:
             result = u
+        else:
+            # got the wrong user from 'g'
+            result = User()
     else:
         print("--> user_factory(): no g.user object")
         if username in session:
             print("--> user_factory(): reloading user from session")
             # print("--> user_factory(): user = ", session[username])
             try:
+                # username was a UUID
                 result = User(data=session[session[username]])
             except:
+                # username was actually a username
                 result = User(data=session[username])
             g.user = result
+        else:
+            # user was also not in the session
+            result = User()
     return result
 
 
@@ -180,9 +190,9 @@ class LoginView(View):
             else:
                 abort(401)
             if 'next' in session:
-                url = session['next']
+                url = session.get('next', None)
                 print("session has a next url: ", url)
-                redirect(url)
+                return redirect(url or url_for("project_list"))
             else:
                 print("session has NO next url")
         if not response:
