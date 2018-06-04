@@ -9,7 +9,7 @@
   <ul>
   {% for issue in issues %}
   <li>{{ issue.ref }} - {{ issue.subject }}
-  {%- if issue.depends_on -%}
+  {%- if issue|attr('depends_on') -%}
   , depdendencies: {{ issue.depends_on | default('no dependencies')}}
   {% endif %}
   </li>
