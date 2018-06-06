@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from flask import session
 from flask import request
 from flask import render_template
@@ -11,9 +12,12 @@ from flask import g
 from flask.views import MethodView
 from flask_login import login_required
 from .auth import current_user
-from .libutils import get_user_uuid
-from .taiga import calculate_dependencies
 from .taiga import TaigaIssue
+# from .libutils import create_graph
+from .libutils import calculate_ETAs
+from .libutils import get_user_uuid
+from .libutils import issues_waiting
+from .libutils import max_eta
 
 class ProjectListView(MethodView):
 
@@ -64,17 +68,23 @@ class ProjectIssuesListView(MethodView):
         api = current_app.config.get('API_URL')
         token = user.token
         tc = current_app.taiga_client
-        cal = tc.get_issue_custom_attributes(pid=pid)
-        TaigaIssue.set_custom_fields(cal)
+        tc.autologin()
+        TaigaIssue.configure(tc, pid)
         il = tc.get_issues(pid=pid)
-        # print("ProjectIssuesListView.get(): issues = ", il)
-        context['issues'] = il
-        for issue in il:
-            issue_cav = tc.get_issue_custom_attribute_values(issue.id)
-            if issue_cav:
-                issue.update(issue_cav)
-        context['dependencies'] = calculate_dependencies(il)
+        # print("ProjectIssuesListView.get(): il = ", il)
+        il = dict(map(lambda x: (x.ref, x), il))
+        # print("ProjectIssuesListView.get() after map(): il = ", il)
+        # now calculate the ETAs for all issues:
+        calculate_ETAs(il)
+        last_eta = max_eta(il)
+        tomorrow = date.today() + timedelta(days=1)
+        flash("ETA for the last issue: " + str(last_eta))
+        waiting = issues_waiting(il)
+        if waiting > 0:
+            flash("There are %d issues waiting" % waiting)
+        active = [il[i] for i in il if not il[i].is_closed]
+        context['issues'] = active
+        context['tomorrow'] = tomorrow
         context['projectid'] = pid
         response = make_response(self.render_template(context))
-        # print("uuid: ", user.get_id(), ", response: ", response)
         return response
