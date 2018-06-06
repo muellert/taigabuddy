@@ -55,19 +55,5 @@ taiga_client = TaigaGlobal()
 taiga_client.init_app(app)
 
 
-@app.route('/')
-def main():
-    u = None
-    try:
-        u = request.cookies['username']
-    except:
-        print("redirect to ", url_for('login'))
-    if u not in session:
-        redirect(url_for('login'))
-    return "Hello! session = " + str(session)
-
-# [u]['data']['full_name']
-
-
 if has_DTB is True:
     toolbar.init_app(app)

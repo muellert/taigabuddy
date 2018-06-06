@@ -7,6 +7,9 @@ from .auth import login_manager
 from .projectviews import ProjectListView
 from .projectviews import ProjectIssuesListView
 
+app.add_url_rule('/', view_func=LoginView.as_view(
+    'index', template_name='index.html.j2'))
+
 app.add_url_rule('/login', view_func=LoginView.as_view(
     'login', template_name='login.html.j2'))
 
