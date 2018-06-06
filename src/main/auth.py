@@ -20,7 +20,7 @@ from .libutils import set_username_cookie
 login_manager = LoginManager()
 
 
-class TaigaAuthProblem(Exception):
+class TaigaAuthException(Exception):
     def __init__(self, orig):
         self.e_data = orig
 
@@ -54,7 +54,7 @@ class User:
              data = self.authenticate(self.auth_url, username, password)
         # print("User.login(): data: ", data)
         if getattr(data, '_error_message', None):
-            raise TaigaAuthProblem(data)
+            raise TaigaAuthException(data)
         else:
             self.is_active = True
             self.data = data
@@ -130,11 +130,10 @@ def user_factory(username):
        and will not be added to the session, or to 'g'.
     """
     result = None
-    print("==> user_factory(%s) called" % username)
+    # print("==> user_factory(%s) called" % username)
     u = getattr(g, 'user', None)
     if u:
-        # print("user_factory: g = ", dir(g))
-        print("g.user = ", g.user.name)
+        # print("g.user = ", g.user.name)
         if u.data['uuid'] == username:
             result = u
         else:
@@ -143,7 +142,7 @@ def user_factory(username):
     else:
         print("--> user_factory(): no g.user object")
         if username in session:
-            print("--> user_factory(): reloading user from session")
+            # print("--> user_factory(): reloading user from session")
             # print("--> user_factory(): user = ", session[username])
             try:
                 # username was a UUID
