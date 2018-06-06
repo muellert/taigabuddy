@@ -16,6 +16,8 @@
 	<!-- navbar items, navbar burger... -->
 	<div class="navbar-menu is-active">
 	  <!-- navbar start, navbar end -->
+	  <a style="float: left;"
+	     href="{{ url_for("index") }}">Home</a>
 	  {% block profile_links %}
 	  <div class="profile_links">{{ profile_links }}</div>
 	  {% endblock %}
