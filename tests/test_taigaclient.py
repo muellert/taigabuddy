@@ -39,3 +39,22 @@ def test_get_issues():
         res = tc.get(api + "/issues?project=2")
         # import pdb; pdb.set_trace()
         assert res
+
+
+def test_get_issues_chain():
+    """this depends on our specific test data set.
+
+       get an issue which has dependencies, plus the
+       issues it depends on, and check whether the
+       data structure is usable.
+    """
+
+
+def test_get_issues_ETA():
+    import requests as req
+    from main import app
+    from main import tc
+    api = taiga_login()
+    with app.test_request_context():
+        res = tc.get(api + "/issues/by_ref?ref=142&project=2")
+        assert res
