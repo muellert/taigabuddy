@@ -5,6 +5,7 @@
 {% block content %}
 
   <h1>Issues List For Project {{ projectid }}</h1>
+  <div>
   <div class="issueslist">
   <ul>
   {% for issue in issues %}
@@ -20,5 +21,10 @@
   {% endfor %}
   </ul>
   </div>
-
+  {%- if graph -%}
+  <div class="{{ issues_graph_css_class }}">
+  {{ graph }}
+  </div>
+  {%- endif -%}
+  </div>
 {% endblock %}
