@@ -9,6 +9,7 @@ pyyaml
 wtforms
 Flask_WTF
 
+SQLAlchemy
 psycopg2
 
 plotly
