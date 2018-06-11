@@ -9,7 +9,7 @@
   <ul>
   {% for proj in projects %}
   <li>{{ proj.id }} - {{ proj.name }}<br />
-  <a href="{{ proj.sprints }}">Sprints</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="{{ proj.sprints_url }}">Sprints</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="{{ proj.issue_url }}">Issues</a></li>
   {% endfor %}
   </ul>  
