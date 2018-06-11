@@ -6,6 +6,7 @@ from .auth import LogoutView
 from .auth import login_manager
 from .projectviews import ProjectListView
 from .projectviews import ProjectIssuesListView
+from .projectviews import ProjectSprintsListView
 
 app.add_url_rule('/', view_func=LoginView.as_view(
     'index', template_name='index.html.j2'))
@@ -25,4 +26,7 @@ app.add_url_rule('/projects', view_func=ProjectListView.as_view(
 
 app.add_url_rule('/projects/<int:pid>/issues', view_func=ProjectIssuesListView.as_view(
     'project_issue_list', template_name='issueslist.html.j2'))
+
+app.add_url_rule('/projects/<int:pid>/sprints', view_func=ProjectSprintsListView.as_view(
+    'project_sprint_list', template_name='sprintslist.html.j2'))
 
