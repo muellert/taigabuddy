@@ -1,7 +1,8 @@
 from flask import render_template
+from flask.views import MethodView
 
 
-class TemplateFinderViewBase:
+class TemplateFinderViewBase(MethodView):
     """factor common view functionality out"""
 
     def __init__(self, template_name):
