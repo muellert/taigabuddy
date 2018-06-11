@@ -8,7 +8,9 @@
   <div class="projectlist">
   <ul>
   {% for proj in projects %}
-  <li><a href="{{ proj.issue_url }}"> See Issues for {{ proj.id }} - {{ proj.name }}</a></li>
+  <li>{{ proj.id }} - {{ proj.name }}<br />
+  <a href="{{ proj.sprints }}">Sprints</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="{{ proj.issue_url }}">Issues</a></li>
   {% endfor %}
   </ul>  
   </div>
