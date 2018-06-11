@@ -1,7 +1,7 @@
+import sys
 import requests
 from flask import session
 from flask import request
-from flask import render_template
 from flask import current_app
 from flask import url_for
 from flask import flash
@@ -11,6 +11,7 @@ from flask import abort
 from flask import g
 from flask_login import LoginManager
 from flask_login import login_user, logout_user
+from .views import TemplateFinderViewBase
 
 
 from flask.views import View
@@ -157,15 +158,9 @@ def user_factory(username):
     return result
 
 
-class LoginView(View):
+class LoginView(TemplateFinderViewBase, View):
     """Display the login form and log the user in."""
     methods = ("GET", "POST")
-
-    def __init__(self, template_name):
-        self.template_name = template_name
-
-    def render_template(self, context):
-        return render_template(self.template_name, **context)
 
     def dispatch_request(self):
         context = {'username': "", 'password': ''}
@@ -199,27 +194,31 @@ class LoginView(View):
         return response
 
 
-class LogoutView(View):
+class LogoutView(TemplateFinderViewBase, View):
     """Log the current user out by calling flask_login's method
        and unsetting his cookie.
     """
     methods = ("GET", "POST")
 
-    def __init__(self, template_name):
-        self.template_name = template_name
-
-    def render_template(self, context):
-        return render_template(self.template_name, **context)
-
     def dispatch_request(self):
         u = None
         context = {'username': "anonymous user"}
         response = None
+        print(">>> LogoutView()")
         try:
-            u = request.cookies.get('username', None)
-            current_app.logger.info("user: ", u)
+            # u = request.cookies.get('username', None)
+            u = current_user()
+            import pdb; pdb.set_trace()
+            # print("---LogoutView(): type(u) = %s" % str(type(u)))
+            # print("---LogoutView(): dir(u) = %s" % str(dir(u)))
+            # print("---LogoutView(): u.name = %s" % u.name)
+            # print("---LogoutView(): u.items() = %s" % str(u.data.items()))
+            # print("---LogoutView(): session =", session)
+            # print("---LogoutView(): cookies =", request.cookies)
+            current_app.logger.info("user: %s" % u)
             logout_user()
         except:
+            print("---LogoutView(): raised an exception: %s" % str(sys.exc_info()[0]))
             flash("You were not logged in, anyway")
         response = make_response(self.render_template(context))
         # set_username_cookie(response, '', 0)

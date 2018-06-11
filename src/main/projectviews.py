@@ -1,7 +1,6 @@
 from datetime import date, timedelta
 from flask import session
 from flask import request
-from flask import render_template
 from flask import current_app
 from flask import url_for
 from flask import flash
@@ -19,14 +18,9 @@ from .libutils import get_user_uuid
 from .libutils import issues_waiting
 from .libutils import max_eta
 from .gantt import issues_gantt
+from .views import TemplateFinderViewBase
 
-class ProjectListView(MethodView):
-
-    def __init__(self, template_name):
-        self.template_name = template_name
-
-    def render_template(self, context):
-        return render_template(self.template_name, **context)
+class ProjectListView(TemplateFinderViewBase, MethodView):
 
     @login_required
     def get(self):
@@ -49,13 +43,7 @@ class ProjectListView(MethodView):
         return response
 
 
-class ProjectIssuesListView(MethodView):
-
-    def __init__(self, template_name):
-        self.template_name = template_name
-
-    def render_template(self, context):
-        return render_template(self.template_name, **context)
+class ProjectIssuesListView(TemplateFinderViewBase, MethodView):
 
     @login_required
     def get(self, pid):
