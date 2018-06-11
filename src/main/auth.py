@@ -14,7 +14,7 @@ from flask_login import login_user, logout_user
 from .views import TemplateFinderViewBase
 
 
-from flask.views import View
+# from flask.views import View
 from .libutils import set_username_cookie
 
 
@@ -111,14 +111,26 @@ class User:
 
 def current_user(username=None):
     result = None
-    try:
-        u = g.user
-        print("current_user: found ", u.data['uuid'])
-        result = u
-    except:
-        print("current_user: nothing found")
-        u = user_factory(username)
-        result = u
+    u = getattr(g, 'user', None)
+    if u is not None:
+        print("current_user: found ", dir(u))
+        # import pdb; pdb.set_trace()
+        # print("current_user: ", u.name)
+        # print("current_user: found ", u.data['uuid'])
+        result = User(data=u)
+    else:
+        print("current_user: nothing found in 'g'")
+        print("now trying the session")
+        try:
+            name = session['username']
+            # print("  got username ", name)
+            u = session[name]
+            # print("current_user: found ", type(u))
+            # import pdb; pdb.set_trace()
+            result = User(data=u)
+        except:
+            u = user_factory(username)
+            result = u
     return result
 
 
@@ -158,7 +170,8 @@ def user_factory(username):
     return result
 
 
-class LoginView(TemplateFinderViewBase, View):
+# class LoginView(TemplateFinderViewBase, View):
+class LoginView(TemplateFinderViewBase):
     """Display the login form and log the user in."""
     methods = ("GET", "POST")
 
@@ -194,7 +207,8 @@ class LoginView(TemplateFinderViewBase, View):
         return response
 
 
-class LogoutView(TemplateFinderViewBase, View):
+# class LogoutView(TemplateFinderViewBase, View):
+class LogoutView(TemplateFinderViewBase):
     """Log the current user out by calling flask_login's method
        and unsetting his cookie.
     """
@@ -208,13 +222,14 @@ class LogoutView(TemplateFinderViewBase, View):
         try:
             # u = request.cookies.get('username', None)
             u = current_user()
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
             # print("---LogoutView(): type(u) = %s" % str(type(u)))
             # print("---LogoutView(): dir(u) = %s" % str(dir(u)))
             # print("---LogoutView(): u.name = %s" % u.name)
             # print("---LogoutView(): u.items() = %s" % str(u.data.items()))
             # print("---LogoutView(): session =", session)
             # print("---LogoutView(): cookies =", request.cookies)
+            context['username'] = u.name
             current_app.logger.info("user: %s" % u)
             logout_user()
         except:
