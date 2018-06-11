@@ -13,8 +13,6 @@ from flask_login import LoginManager
 from flask_login import login_user, logout_user
 from .views import TemplateFinderViewBase
 
-
-# from flask.views import View
 from .libutils import set_username_cookie
 
 
@@ -170,7 +168,6 @@ def user_factory(username):
     return result
 
 
-# class LoginView(TemplateFinderViewBase, View):
 class LoginView(TemplateFinderViewBase):
     """Display the login form and log the user in."""
     methods = ("GET", "POST")
@@ -207,7 +204,6 @@ class LoginView(TemplateFinderViewBase):
         return response
 
 
-# class LogoutView(TemplateFinderViewBase, View):
 class LogoutView(TemplateFinderViewBase):
     """Log the current user out by calling flask_login's method
        and unsetting his cookie.

@@ -11,7 +11,6 @@ from flask import g
 from flask_login import login_required
 from .auth import current_user
 from .taiga import TaigaIssue
-# from .libutils import create_graph
 from .libutils import calculate_ETAs
 from .libutils import get_user_uuid
 from .libutils import issues_waiting
@@ -19,7 +18,7 @@ from .libutils import max_eta
 from .gantt import issues_gantt
 from .views import TemplateFinderViewBase
 
-# class ProjectListView(TemplateFinderViewBase, MethodView):
+
 class ProjectListView(TemplateFinderViewBase):
 
     @login_required
@@ -43,7 +42,6 @@ class ProjectListView(TemplateFinderViewBase):
         return response
 
 
-# class ProjectIssuesListView(TemplateFinderViewBase, MethodView):
 class ProjectIssuesListView(TemplateFinderViewBase):
 
     @login_required
@@ -85,7 +83,6 @@ class ProjectIssuesListView(TemplateFinderViewBase):
         return response
 
 
-# class ProjectSprintsListView(TemplateFinderViewBase, MethodView):
 class ProjectSprintsListView(TemplateFinderViewBase):
 
     @login_required
