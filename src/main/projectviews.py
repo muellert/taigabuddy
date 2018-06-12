@@ -36,6 +36,7 @@ class ProjectListView(TemplateFinderViewBase):
         # print("ProjectListView.get(): pl = ", pl)
         for p in pl:
             p['issue_url'] = "/projects/%d/issues" % p['id']
+            p['sprint_url'] = "/projects/%d/sprints" % p['id']
         context['projects'] = pl
         response = make_response(self.render_template(context))
         # print("uuid: ", user.get_id(), ", response: ", response)
@@ -99,26 +100,11 @@ class ProjectSprintsListView(TemplateFinderViewBase):
         token = user.token
         tc = current_app.taiga_client
         tc.autologin()
-        TaigaIssue.configure(tc, pid)
-        il = tc.get_issues(pid=pid)
-        # print("ProjectIssuesListView.get(): il = ", il)
-        ig = dict(map(lambda x: (x.ref, x), il))
-        # print("ProjectIssuesListView.get() after map(): il = ", il)
-        # now calculate the ETAs for all issues:
-        calculate_ETAs(ig)
-        last_eta = max_eta(ig)
-        tomorrow = date.today() + timedelta(days=1)
-        flash("ETA for the last issue: " + str(last_eta))
-        waiting = issues_waiting(ig)
-        if waiting > 0:
-            flash("There are %d issues waiting" % waiting)
-        active = [ig[i] for i in ig if not ig[i].is_closed]
-        aig = dict(map(lambda x: (x.ref, x), active))
-        ganttchart = issues_gantt(aig)
-        context['issues_graph_css_class'] = issues_graph_css_class
-        context['graph'] = ganttchart
-        context['issues'] = active
-        context['tomorrow'] = tomorrow
+        msts = tc.get_milestones(pid=pid)
+        print("ProjectSprintsListView(): msts = ", msts)
+        for mst in msts:
+            mst.sprint_url = '/sprint/%d/user_stories' % mst.id
+        context['sprints'] = msts
         context['projectid'] = pid
         response = make_response(self.render_template(context))
         return response
