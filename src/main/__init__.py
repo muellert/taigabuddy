@@ -28,5 +28,5 @@ app.add_url_rule('/projects/<int:pid>/issues', view_func=ProjectIssuesListView.a
     'project_issue_list', template_name='issueslist.html.j2'))
 
 app.add_url_rule('/projects/<int:pid>/sprints', view_func=ProjectSprintsListView.as_view(
-    'project_sprint_list', template_name='sprintslist.html.j2'))
+    'project_sprint_list', template_name='sprintlist.html.j2'))
 
