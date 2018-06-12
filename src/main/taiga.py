@@ -90,6 +90,13 @@ class TaigaGlobal(BaseTaigaClient):
                 issue.update(issue_cav)
         return il
 
+    def get_milestones(self, pid):
+        """get all milestones for the given project"""
+        self.autologin()
+        r = super().get(self.api + '/milestones?project=%d' % pid)
+        mst = [TaigaMilestone(data=element) for element in r.json()]
+        return mst
+
     def get_issue_custom_attributes(self, pid):
         """get custom attributes for issues for the given project"""
         self.autologin()
@@ -293,3 +300,20 @@ class TaigaIssue(TaigaIssueCustomFields, TaigaIssueStates):
             fieldname = self.index_to_field(index)
             field_value = self.string_to_value(fieldname, s_value)
             self.data[fieldname] = field_value
+
+
+class TaigaMilestone:
+
+    pid = None
+
+    def __init__(self, data={}):
+        self.data = data
+
+    def __str__(self):
+        return "TaigaMilestone<str(%s)>" % self.data
+
+    def __getattr__(self, attr):
+        if attr in self.data:
+            return self.data[attr]
+        # raise - don't do that until we know that an exception was going on
+        return None
