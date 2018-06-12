@@ -29,5 +29,5 @@ def issues_gantt(il):
                for x in il]
     fig = ff.create_gantt(df)
     result = plot(fig, output_type="div", config=pl_config)
-    print("issues_gantt(): figure = ", fig)
+    # print("issues_gantt(): figure = ", fig)
     return result
