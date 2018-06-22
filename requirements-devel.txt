@@ -1,3 +1,4 @@
--r requirement.txt
+-r requirements.txt
+bpython
 pytest
 flask-debugtoolbar
