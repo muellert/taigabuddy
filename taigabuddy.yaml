@@ -12,6 +12,7 @@ api_url: http://localhost:8000/api/v1
 auth_url: http://localhost:8000/api/v1/auth
 
 # database:
+db_driver: postgresql
 db_host: localhost
 db_port: 5432
 db_user: taigabuddy
