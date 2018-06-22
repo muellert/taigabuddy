@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from datetime import datetime
 from flask import session
 from flask import request
 from flask import current_app
@@ -85,6 +86,7 @@ class ProjectIssuesListView(TemplateFinderViewBase):
 
 
 class ProjectSprintsListView(TemplateFinderViewBase):
+    """list all the open sprints in this project"""
 
     @login_required
     def get(self, pid):
@@ -101,10 +103,137 @@ class ProjectSprintsListView(TemplateFinderViewBase):
         tc = current_app.taiga_client
         tc.autologin()
         msts = tc.get_milestones(pid=pid)
+        today = datetime.today().date()
         print("ProjectSprintsListView(): msts = ", msts)
+        sprintlist = []
+        usedsprints = set()
         for mst in msts:
             mst.sprint_url = '/sprint/%d/user_stories' % mst.id
-        context['sprints'] = msts
+            mst.startdate = mst.estimated_start
+            mst.enddate = datetime.strptime(mst.estimated_finish,
+                                            "%Y-%m-%d").date()
+            # print("ProjectSprintsListView.get(): milestone = %s" % mst)
+            mst.is_open = not mst.closed
+            if mst.enddate < today:
+                mst.overdue = True
+                if mst.is_open:
+                    sprintlist.append(mst)
+                    usedsprints.add(mst.id)
+            else:
+                mst.overdue = False
+        for mst in msts:
+            if mst.id not in usedsprints and mst.is_open \
+               and not mst.overdue:
+                sprintlist.append(mst)
+                usedsprints.add(mst.id)
+        for mst in msts:
+            if mst.closed:
+                sprintlist.append(mst)
+        print("ProjectSprintsListView(): sprintlist = ", sprintlist)
+        context['sprints'] = sprintlist
         context['projectid'] = pid
         response = make_response(self.render_template(context))
         return response
+
+
+class ProjectSprintDetailsView(TemplateFinderViewBase):
+    """list all the open user stories in this sprint"""
+
+    @login_required
+    def get(self, pid, sprintid):
+        context = {}
+        user = None
+        try:
+            user = g.user
+        except:
+            c = get_user_uuid(request)
+            user = current_user(c)
+        api = current_app.config.get('API_URL')
+        token = user.token
+        tc = current_app.taiga_client
+        tc.autologin()
+        today = datetime.today()
+        msts = tc.get_milestones(pid=pid)
+        usl = tc.get_userstories(pid=pid, sprintid=sprintid)
+        # print("ProjectSprintDetailsView(): msts = ", msts)
+        # print("ProjectSprintsDetailsView(): usl = ", usl)
+        targetsprints = []
+        sprinttitle = ""
+        for mst in msts:
+            mst.sprint_url = '/userstories?project=%d' % mst.id
+            overdue = datetime.strptime(mst.estimated_finish,
+                                            "%Y-%m-%d") < today
+            # print("ProjectSprintsDetailsView.get(): mst.id = %d, overdue: %s, closed: %s" % (mst.id, str(overdue), str(mst.closed)))
+            if not mst.closed and mst.id != sprintid and not overdue:
+                targetsprints.append(mst)
+            if mst.id == sprintid:
+                sprinttitle = mst.name
+                print("found sprint title", sprinttitle)
+                # print(" -- appended sprint %d" % mst.id)
+        sprint_points = 0
+        userstories_ids = []
+        # print("ProjectSprintsDetailsView.get(): sprintid = %d" %
+        #      sprintid)
+        for us in usl:
+            print("ProjectSprintsDetailsView.get(): sprint_points = %d" %
+                  sprint_points)
+            if not us.is_closed:
+                sprint_points += us.allpoints
+                userstories_ids.append(us.id)
+        print("ProjectSprintsDetailsView.get(): open userstories = ",
+              userstories_ids)
+        context['sprintid'] = sprintid
+        context['sprintname'] = sprinttitle
+        context['sprintpoints'] = sprint_points
+        context['sprints'] = targetsprints
+        context['userstories'] = usl
+        context['projectid'] = pid
+        session['open_userstories'] = userstories_ids
+        # import pdb; pdb.set_trace()
+        response = make_response(self.render_template(context))
+        return response
+
+
+    @login_required
+    def post(self, pid, sprintid):
+        context = {}
+        user = None
+        try:
+            user = g.user
+        except:
+            c = get_user_uuid(request)
+            user = current_user(c)
+        api = current_app.config.get('API_URL')
+        token = user.token
+        tc = current_app.taiga_client
+        tc.autologin()
+        pc = request.path.split('/')
+        pid = pc[2]
+        # import pdb; pdb.set_trace()
+        try:
+            open_userstories = session['open_userstories']
+        except:
+            raise ValueError("""Called from the wrong context: """
+                             """No user stories available.""")
+        # don't do anything if the user pressed 'Cancel':
+        if 'abort' in request.form:
+            return redirect(url_for('project_sprint_list', pid=pid))
+        next_sprint = request.form['next_sprint']
+        if next_sprint == 'Z':
+            flash("You need to make a choice for the next sprint")
+            return redirect(request.referer)
+        # the user selected the backlog as the target:
+        if next_sprint == 'Y':
+            r = tc.reassign_userstories_and_close(pid,
+                                                  open_userstories)
+            flash("status code: %d" % r.status_code)
+            return redirect(url_for('project_sprint_list', pid=pid))
+        # TBD.
+        if next_sprint == 'X':
+            return redirect(url_for("create_new_sprint"))
+        # else:
+        # the user selected the backlog as the target:
+        r = tc.reassign_userstories_and_close(pid, open_userstories,
+                                              next_sprint)
+        flash("status code: %d" % r.status_code)
+        return redirect(url_for('project_sprint_list', pid=pid))
