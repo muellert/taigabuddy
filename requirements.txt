@@ -5,7 +5,9 @@ requests
 
 Flask
 flask-sqlalchemy
+flask_login
 pyyaml
+flask-debugtoolbar
 
 wtforms
 Flask_WTF
@@ -14,3 +16,4 @@ SQLAlchemy
 psycopg2
 
 plotly
+numpy
