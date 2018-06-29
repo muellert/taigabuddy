@@ -2,12 +2,10 @@ from datetime import datetime as dt
 from datetime import date
 from datetime import timedelta
 import requests
-# from flask import current_app
 from flask import session
 from flask import url_for
 from flask import redirect
 from flask import flash
-# from .auth import current_user
 from .auth import user_factory
 from .auth import TaigaAuthException
 from .libutils import parse_time
@@ -26,6 +24,7 @@ class BaseTaigaClient:
         app.taiga_client = self
 
     def login(self, username, password=None):
+        # print("BaseTaigaClient.login(%s): " % username)
         u = user_factory(username)
         assert u is not None
         if u.is_anonymous:
@@ -100,12 +99,20 @@ class TaigaGlobal(BaseTaigaClient):
                 issue.update(issue_cav)
         return il
 
-    def get_milestones(self, pid):
+    def get_milestones(self, pid, sprintid=None):
         """get all milestones for the given project"""
         self.autologin()
         r = super().get(self.api + '/milestones?project=%d' % pid)
         mst = [TaigaMilestone(data=element) for element in r.json()]
-        return mst
+        result = []
+        if sprintid is not None:
+            # weed out all the unwanted milestones:
+            for m in mst:
+                if m.id == sprintid:
+                    result.append(m)
+        else:
+            result = mst
+        return result
 
     def get_userstories(self, pid, sprintid):
         """get all user stories for the given sprint"""
@@ -380,7 +387,4 @@ class TaigaUserStory(ListNestedAttributesMixin):
     @property
     def allpoints(self):
         """calculate the sum of all points in this user story"""
-        sum = 0
-        for _, p in self.data['points'].items():
-            sum += int(p)
-        return sum
+        return self.total_points or 0
