@@ -1,0 +1,37 @@
+{% extends "layout.html.j2" %}
+{% block title %}Sprint List For Project {{ projectid }}{% endblock %}
+
+
+{% block content %}
+
+<h1>Adjust Points for Sprint {{ sprintid }} "{{ sprintname }}"</h1>
+<div>
+  <div class="backlink">
+    <a href="{{ url_for('project_sprint_details', pid=projectid, sprintid=sprintid) }}">Back to Sprint Details List</a>
+  </div>
+  <div class="sprintinfo">
+    total points: {{ points }}, starting points: {{ start_points }},
+    current points: {{ cur_points }}
+  </div>
+  <div class="sprintadjustform">
+    <form method="post">
+      <input type="hidden" name="currentpoints" value="{{ points }}" />
+      <input type="submit" name="process_opening"
+	     value="Record {{ points }} points as Opening Points for this Sprint" /><br/>
+  <div class="form-separator">
+    - OR -
+  </div>
+      <input type="submit" name="process_current"
+	     value="Record {{ points }} points as Current Points for this Sprint" />
+  <!-- div class="form-separator">
+    - OR -<br/>
+  </div>
+      <input type="text" name="adjustpoints"
+             value="{{ adjustpoints | default('') }}" />
+      <input type="submit" name="process_adjustment"
+             value="adjust points" / -->
+    </form>
+  </div>
+
+</div>
+{% endblock %}
