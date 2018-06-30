@@ -18,6 +18,8 @@ from .config import config
 from .auth import User
 from .auth import login_manager
 from .taiga import TaigaGlobal
+from .model import db_init
+from .model import db_session
 
 
 class TBJsonEncoder(json.JSONEncoder):
@@ -43,6 +45,8 @@ def create_app(config={}, environment=None):
     return app
 
 
+db_init()
+
 app = create_app(config=config)
 
 app.config['SECRET_KEY'] = "qeljq.48au8<F3>4aeh2liqb3hed,a i38<F4><F5>0<F5>"
@@ -53,6 +57,11 @@ User.set_url(app.config['AUTH_URL'])
 
 taiga_client = TaigaGlobal()
 taiga_client.init_app(app)
+
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db_session.remove()
 
 
 if has_DTB is True:
