@@ -1,0 +1,31 @@
+
+@import "sass/utilities/initial-variables";
+
+$navbar-height: 1.5rem;
+$navbar-background-color: $grey-light;
+$body-background-color: $grey-lighter;
+
+@import "sass/utilities/functions";
+
+@import "bulma";
+
+h1 {
+    font-size: 150%;
+    font-weight: 550;
+}
+.navbar, .profile_links { width: 100%; }
+
+.projectlist li {
+    padding-lower: 2rem;
+    border: 2px blue solid;
+}
+
+.backlink {
+    margin-top: 1.5ex;
+    margin-bottom: 1.2ex;
+}
+
+.adjustpoints {
+    margin-top: 1.2ex;
+    margin-bottom: 1.5ex;
+}
