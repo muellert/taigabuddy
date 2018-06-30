@@ -1,0 +1,30 @@
+{% extends "layout.html.j2" %}
+{% block title %}Sprint List For Project {{ projectid }}{% endblock %}
+
+
+{% block content %}
+
+  <h1>Sprint List For Project {{ projectid }}</h1>
+  <div>
+  <div class="backlink">
+  <a href="{{ url_for('project_list') }}">Back to Project List</a>
+  </div>
+  <div class="sprintslist">
+  <ul>
+  {% for sprint in sprints %}
+  <li><a href="{{ url_for("project_sprint_details", pid=projectid, sprintid=sprint.id) }}">{{ sprint.id }} - {{ sprint.name }}</a>
+  &nbsp;&nbsp;&nbsp;from {{ sprint.startdate }} to {{ sprint.enddate }}
+  &nbsp;&nbsp;&nbsp;
+  {%- if sprint.is_open and not sprint.overdue -%}
+  (ongoing)
+  {% elif sprint.is_open and sprint.overdue %}
+  (OVERDUE)
+  {% else %}
+  (closed)
+  {% endif %}
+  </li>
+  {% endfor %}
+  </ul>
+  </div>
+  </div>
+{% endblock %}
