@@ -1,3 +1,6 @@
+import re
+import csv
+import requests as req
 from datetime import datetime as dt
 from datetime import date
 from datetime import timedelta
@@ -163,4 +166,53 @@ def max_eta(il):
     for i in il:
         print("max_eta(): result = ", result)
         result = max(il[i].eta, result)
+    return result
+
+
+class TaigaUserStoriesStats:
+    sprintname = None
+    points = 0.0
+    is_closed = None
+
+    def __init__(self, sprintname=None, points=0.0, is_closed=False):
+        self.sprintname = sprintname
+        self.points = points
+        self.is_closed = is_closed
+
+    def add_points(self, points):
+        self.points += points
+
+
+def read_userstories_stats(url):
+    """read the userstories stats report CSV from Taiga
+
+       returns a dictionary with the Sprint titles and their total points
+    """
+    result = {}
+    try:
+        r = req.get(url)
+    except:
+        result = {"__message": "Could not fetch CSV. Status code: %d %s" % (r.status_code, r.reason)}
+
+    c = csv.reader(r.text.split("\r\n"))
+    h = next(c)
+    headers = dict([ (h[i], i) for i in range(len(h)) ])
+    print("CSV read, headers = ", headers)
+    have_sprint = 'sprint' in headers
+    have_subject = 'subject' in headers
+    for row in c:
+        if have_sprint and have_subject:
+            rowtitle = row[headers['sprint']] or row[headers['subject']]
+        elif have_sprint:
+            rowtitle = row[headers['sprint']]
+        elif have_subject:
+            rowtitle = row[headers['subject']]
+            if not re.match(".*\d\.\d.*", rowtitle):
+                continue
+        else:
+            raise ValueError("Unknown table structure, doesn't have a 'sprint'"
+                             " colum and also not a 'subject' column")
+        if rowtitle not in result:
+            result[rowtitle] = TaigaUserStoriesStats(rowtitle)
+        result[rowtitle].add_points(float(row[headers['total-points']]))
     return result
