@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from datetime import datetime
+from datetime import datetime as dt
 from flask import session
 from flask import request
 from flask import current_app
@@ -18,7 +18,9 @@ from .libutils import issues_waiting
 from .libutils import max_eta
 from .gantt import issues_gantt
 from .views import TemplateFinderViewBase
-
+from .model import Log
+from .model import SprintPoints
+from .model import db_session
 
 class ProjectListView(TemplateFinderViewBase):
 
@@ -103,15 +105,14 @@ class ProjectSprintsListView(TemplateFinderViewBase):
         tc = current_app.taiga_client
         tc.autologin()
         msts = tc.get_milestones(pid=pid)
-        today = datetime.today().date()
+        today = dt.today().date()
         print("ProjectSprintsListView(): msts = ", msts)
         sprintlist = []
         usedsprints = set()
         for mst in msts:
             mst.sprint_url = '/sprint/%d/user_stories' % mst.id
             mst.startdate = mst.estimated_start
-            mst.enddate = datetime.strptime(mst.estimated_finish,
-                                            "%Y-%m-%d").date()
+            mst.enddate = dt.strptime(mst.estimated_finish, "%Y-%m-%d").date()
             # print("ProjectSprintsListView.get(): milestone = %s" % mst)
             mst.is_open = not mst.closed
             if mst.enddate < today:
@@ -152,7 +153,7 @@ class ProjectSprintDetailsView(TemplateFinderViewBase):
         token = user.token
         tc = current_app.taiga_client
         tc.autologin()
-        today = datetime.today()
+        today = dt.today()
         msts = tc.get_milestones(pid=pid)
         usl = tc.get_userstories(pid=pid, sprintid=sprintid)
         # print("ProjectSprintDetailsView(): msts = ", msts)
@@ -161,9 +162,9 @@ class ProjectSprintDetailsView(TemplateFinderViewBase):
         sprinttitle = ""
         for mst in msts:
             mst.sprint_url = '/userstories?project=%d' % mst.id
-            overdue = datetime.strptime(mst.estimated_finish,
-                                            "%Y-%m-%d") < today
-            # print("ProjectSprintsDetailsView.get(): mst.id = %d, overdue: %s, closed: %s" % (mst.id, str(overdue), str(mst.closed)))
+            overdue = dt.strptime(mst.estimated_finish, "%Y-%m-%d") < today
+            # print("ProjectSprintsDetailsView.get(): mst.id = %d, "
+            # "overdue: %s, closed: %s" % (mst.id, str(overdue), str(mst.closed)))
             if not mst.closed and mst.id != sprintid and not overdue:
                 targetsprints.append(mst)
             if mst.id == sprintid:
@@ -178,7 +179,7 @@ class ProjectSprintDetailsView(TemplateFinderViewBase):
             print("ProjectSprintsDetailsView.get(): sprint_points = %d" %
                   sprint_points)
             if not us.is_closed:
-                sprint_points += us.allpoints
+                sprint_points += us.total_points
                 userstories_ids.append(us.id)
         print("ProjectSprintsDetailsView.get(): open userstories = ",
               userstories_ids)
@@ -192,7 +193,6 @@ class ProjectSprintDetailsView(TemplateFinderViewBase):
         # import pdb; pdb.set_trace()
         response = make_response(self.render_template(context))
         return response
-
 
     @login_required
     def post(self, pid, sprintid):
@@ -225,7 +225,8 @@ class ProjectSprintDetailsView(TemplateFinderViewBase):
         # the user selected the backlog as the target:
         if next_sprint == 'Y':
             r = tc.reassign_userstories_and_close(pid,
-                                                  open_userstories)
+                                                  open_userstories,
+                                                  sprintid="null")
             flash("status code: %d" % r.status_code)
             return redirect(url_for('project_sprint_list', pid=pid))
         # TBD.
@@ -237,3 +238,80 @@ class ProjectSprintDetailsView(TemplateFinderViewBase):
                                               next_sprint)
         flash("status code: %d" % r.status_code)
         return redirect(url_for('project_sprint_list', pid=pid))
+
+
+class ProjectSprintAdjustPointsView(TemplateFinderViewBase):
+    """let the user enter added or deleted points"""
+
+    @login_required
+    def get(self, pid, sprintid):
+        context = {}
+        user = None
+        try:
+            user = g.user
+        except:
+            c = get_user_uuid(request)
+            user = current_user(c)
+        api = current_app.config.get('API_URL')
+        token = user.token
+        tc = current_app.taiga_client
+        tc.autologin()
+        mst = tc.get_milestones(pid=pid, sprintid=sprintid)[0]
+        context['sprintid'] = sprintid
+        context['sprintname'] = mst.name
+        context['points'] = mst.total_points
+        context['projectid'] = pid
+        response = make_response(self.render_template(context))
+        return response
+
+    @login_required
+    def post(self, pid, sprintid):
+        context = {}
+        user = None
+        try:
+            user = g.user
+        except:
+            c = get_user_uuid(request)
+            user = current_user(c)
+        api = current_app.config.get('API_URL')
+        token = user.token
+        tc = current_app.taiga_client
+        tc.autologin()
+        now = dt.utcnow()
+        if 'currentpoints' not in request.form:
+            raise ValueError("Form submission corrupted")
+        try:
+            points = float(request.form['currentpoints'])
+        except:
+            points = 0.0
+        sp = db_session.query(SprintPoints).filter_by(sprintid=sprintid).first()
+        if not sp:
+            sp = SprintPoints(sprintid=sprintid, who=user.name)
+        start_points = sp.start_points or "unset"
+        current_points = sp.current_points or "unset"
+        print("start points: ", start_points,
+              ", current points: ", current_points)
+        logentry = "Sprint %d: User '%s' set initial sprint points to %0.2f" % (
+            sprintid, user.name, points)
+        if 'process_opening' in request.form:
+            print(" the user pressed the record button")
+            sp.start_points = points
+        elif 'process_current' in request.form:
+            logentry = "Sprint %d: User '%s' updated sprint points to %0.2f" % (
+                sprintid, user.name, points)
+            print(" the user pressed the update button")
+            sp.current_points = points
+        log = Log(timestamp=now, logentry=logentry)
+        db_session.add(sp)
+        db_session.add(log)
+        db_session.commit()
+        print("SprintPoints: ", sp)
+        mst = tc.get_milestones(pid=pid, sprintid=sprintid)[0]
+        context['sprintid'] = sprintid
+        context['sprintname'] = mst.name
+        context['points'] = mst.total_points
+        context['start_points'] = start_points
+        context['cur_points'] = current_points
+        context['projectid'] = pid
+        response = make_response(self.render_template(context))
+        return response
