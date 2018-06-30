@@ -1,0 +1,46 @@
+{% extends "layout.html.j2" %}
+{% block title %}Details for Sprint {{ sprintid }} For Project {{ projectid }}{% endblock %}
+
+
+{% block content %}
+
+  <h1>User Stories for Sprint "{{ sprintname }}" For Project {{ projectid }} ({{ sprintpoints }} points open)</h1>
+  <div>
+  <div class="backlink">
+  <a href="{{ url_for('project_sprint_list', pid=projectid ) }}">Back to Sprint List</a>
+  </div>
+  <div class="adjustpoints">
+  <a href="{{ url_for('project_sprint_adjustpoints', pid=projectid, sprintid=sprintid) }}">Record And Adjust Points</a>
+  </div>
+  <div class="sprintsdetails">
+  <ul>
+  {% for us in userstories %}
+  {% if not us.is_closed %}
+  <li>{{ us.id }} - {{ us.subject }} ({{ us.allpoints }} points)</a>
+  </li>
+  {% endif %}
+  {% endfor %}
+  </ul>
+  </div>
+  <hr />
+  <div class="closing_sprint">
+  Close this sprint and move the open userstories listed above to this next sprint:
+  <br />
+  <form method="post">
+  <select id="next_sprint" name="next_sprint">
+  <option value="Z">Please Choose</option>
+  <!-- option value="X">Create New Sprint</option -->
+  <option value="Y">Backlog</option>
+  {% for sprint in sprints %}
+  <option value="{{ sprint.id }}">{{ sprint.name }}</option>
+  {% endfor %}
+  </select>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <input type="submit" name="process" value="Yes, continue" />
+  &nbsp;&nbsp;&nbsp; or &nbsp;&nbsp;&nbsp;
+  <input type="submit" name="abort" value="Cancel" />
+  </form>
+  </div>
+  </div>
+{% endblock %}
