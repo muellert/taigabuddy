@@ -8,6 +8,7 @@ from .projectviews import ProjectListView
 from .projectviews import ProjectIssuesListView
 from .projectviews import ProjectSprintsListView
 from .projectviews import ProjectSprintDetailsView
+from .projectviews import ProjectSprintAdjustPointsView
 
 
 app.add_url_rule('/', view_func=LoginView.as_view(
@@ -34,3 +35,6 @@ app.add_url_rule('/projects/<int:pid>/sprints', view_func=ProjectSprintsListView
 
 app.add_url_rule('/sprints/<int:pid>/<int:sprintid>/details', view_func=ProjectSprintDetailsView.as_view(
     'project_sprint_details', template_name='sprintdetails.html.j2'))
+
+app.add_url_rule('/sprints/<int:pid>/<int:sprintid>/adjust_points', view_func=ProjectSprintAdjustPointsView.as_view(
+    'project_sprint_adjustpoints', template_name="sprintadjustpoints.html.j2"))
