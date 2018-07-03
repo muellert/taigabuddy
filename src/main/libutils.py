@@ -169,7 +169,7 @@ def max_eta(il):
     return result
 
 
-class TaigaUserStoriesStats:
+class TaigaSprintStats:
     sprintname = None
     points = 0.0
     is_closed = None
@@ -182,9 +182,14 @@ class TaigaUserStoriesStats:
     def add_points(self, points):
         self.points += points
 
+    def __repr__(self):
+        return "<TaigaSprintStats(%s, %f, %s)" % (
+            self.sprintname, self.points, str(self.is_closed))
 
-def read_userstories_stats(url):
-    """read the userstories stats report CSV from Taiga
+
+def read_sprint_stats(url):
+    """read the userstories stats report CSV from Taiga, which we use for
+       sprint statistics (hence the fnction name)
 
        returns a dictionary with the Sprint titles and their total points
     """
@@ -197,10 +202,13 @@ def read_userstories_stats(url):
     c = csv.reader(r.text.split("\r\n"))
     h = next(c)
     headers = dict([ (h[i], i) for i in range(len(h)) ])
-    print("CSV read, headers = ", headers)
+    # print("CSV read, headers = ", headers)
     have_sprint = 'sprint' in headers
     have_subject = 'subject' in headers
     for row in c:
+        if len(row) == 0:
+            continue
+        # print("read_sprint_stats: row = ", row)
         if have_sprint and have_subject:
             rowtitle = row[headers['sprint']] or row[headers['subject']]
         elif have_sprint:
@@ -213,6 +221,21 @@ def read_userstories_stats(url):
             raise ValueError("Unknown table structure, doesn't have a 'sprint'"
                              " colum and also not a 'subject' column")
         if rowtitle not in result:
-            result[rowtitle] = TaigaUserStoriesStats(rowtitle)
-        result[rowtitle].add_points(float(row[headers['total-points']]))
+            tss = TaigaSprintStats(rowtitle)
+            result[rowtitle] = tss
+        else:
+            tss = result[rowtitle]
+        csv_closed = row[headers['is_closed']]
+        if csv_closed.lower() == 'true':
+            tss.is_closed = True
+        else:
+            tss.is_closed = False
+        csv_points = row[headers['total-points']].strip()
+        try:
+            points = float(csv_points)
+            result[rowtitle].add_points(points)
+        except:
+            pass                # column had no value
+        # print(" -- read_sprint_stats: tss = ", tss)
+    # print(" -- read_sprint_stats: result = ", result)
     return result
