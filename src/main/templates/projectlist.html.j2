@@ -9,7 +9,8 @@
   <ul>
   {% for proj in projects %}
   <li>{{ proj.id }} - {{ proj.name }}<br />
-  <a href="{{ proj.sprint_url }}">Sprints</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="{{ url_for("project_sprint_list", pid=proj.id) }}">Sprints</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="{{ url_for("project_sprint_stats", pid=proj.id) }}">Sprint Statistics</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="{{ proj.issue_url }}">Issues</a></li>
   {% endfor %}
   </ul>  
