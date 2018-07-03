@@ -13,11 +13,18 @@ auth_url: http://localhost:8000/api/v1/auth
 
 # Taiga report URLs:
 
-userstories_url: http://127.0.0.1:9001/api/v1/userstories/csv?uuid=285c367a2b484f3388212fc740f82474
+reports:
+    project:
+        8:
+            userstories:
+                http://127.0.0.1:9001/api/v1/userstories/csv?uuid=285c367a2b484f3388212fc740f82474
+        1:
+            userstories:
+                http://127.0.0.1:9001/api/v1/userstories/csv?uuid=fae60c32b01d494981bf99707a950ca8
 
 # database:
 db_driver: postgresql
-db_host: localhost
+db_host: 127.0.0.1
 db_port: 5432
 db_user: taigabuddy
 db_pass: taigabuddy
