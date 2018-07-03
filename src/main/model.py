@@ -1,37 +1,31 @@
 import datetime
-from sqlalchemy import Column, Integer, Float, String, DateTime
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import scoped_session, sessionmaker
+from flask_sqlalchemy import SQLAlchemy
+from .app import app
 
 
-Base = declarative_base()
-# metadata = MetaData()
-engine = create_engine('sqlite:////tmp/test.db', echo=True)
-db_session = scoped_session(sessionmaker(autocommit=False,
-                                      # autoflush=False,
-                                      bind=engine))
+db = SQLAlchemy(app)
 
 
-class Log(Base):
+class Log(db.Model):
     __tablename__ = "taigabuddy_log"
 
-    id = Column(Integer, primary_key=True)
-    timestamp = Column(DateTime(timezone=True),
-                       nullable=False,
-                       default=datetime.datetime.utcnow)
-    logentry = Column(String)
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime(timezone=True),
+                          nullable=False,
+                          default=datetime.datetime.utcnow)
+    logentry = db.Column(db.String)
 
 
-class SprintPoints(Base):
+class SprintPoints(db.Model):
     __tablename__ = "taigabuddy_sprintdata"
 
-    id = Column(Integer, primary_key=True)
-    sprintid = Column(Integer)
-    opened = Column(DateTime)
-    who = Column(String, nullable=False)
-    start_points = Column(Float, default=0.0)
-    current_points = Column(Float, default=0.0)
+    id = db.Column(db.Integer, primary_key=True)
+    sprintid = db.Column(db.Integer)
+    opened = db.Column(db.DateTime)
+    who = db.Column(db.String, nullable=False)
+    sprintname = db.Column(db.String, nullable=False)
+    start_points = db.Column(db.Float, default=0.0)
+    current_points = db.Column(db.Float, default=0.0)
 
     def __str__(self):
         return "<SprintPoints(%d, %s, %s, %s, %s)>" % (
@@ -39,6 +33,5 @@ class SprintPoints(Base):
             self.start_points, self.current_points)
 
 
-def db_init(engine=engine):
-    Base.metadata.create_all(bind=engine)
-    print("-- db_init()")
+print("model.py: app.config = ", dir(app.config))
+db.create_all()
