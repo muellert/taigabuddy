@@ -37,9 +37,17 @@ class Config:
         for k, v in config.items():
             u = k.upper()
             self.__setattr__(u, v)
-        print("Config.setup(%s): attributes = %s" % (configfile, dir(self)))
+        print("\nConfig.setup(%s): attributes = %s\n" % (configfile, dir(self)))
         if not (hasattr(self, 'API_URL') and hasattr(self, 'AUTH_URL')):
             raise ValueError("You must specify a Taiga instance to access")
+        self.dbsetup()
+        if hasattr(self, 'db_url'):
+            self.__setattr__('SQLALCHEMY_DATABASE_URI', self.db_url)
+        if hasattr(self, 'DB_URL'):
+            self.__setattr__('SQLALCHEMY_DATABASE_URI', self.DB_URL)
+        print("\nConfig.setup(): SQLALCHEMY_DATABASE_URI = ", self.SQLALCHEMY_DATABASE_URI)
+        if hasattr(self, 'DEBUG'):
+            self.__setattr__('SQLALCHEMY_ECHO', True)
 
     def dbsetup(self, params={}):
         """get a database set up. separated from setup() in order to allow for
@@ -49,26 +57,33 @@ class Config:
            configuration inside. Otherwise, the database configuration is taken
            from "magic" attributes of 'self'.
         """
+        print("Config.dbsetup(): config = ", dir(self))
         db_url = None
         if params != {}:
             if 'db_url' in params:
                 db_url = params['db_url']
-            elif params['db_driver'] == 'sqlite':
-                db_url = "sqlite://%s" % params['db_path']
+            elif params['DB_DRIVER'] == 'sqlite':
+                db_url = "sqlite://%s" % params['DB_PATH']
             else:
                 # database is not SQLite:
-                password = urlencode("", params['db_pass'])[1:]
+                password = urlencode("", params['DB_PASS'])[1:]
                 db_url = "%s@%s:%s@%s:%s/%s" % \
-                         (params['db_driver'], params['db_user'],
-                          password, params['db_host'],
-                          params['db_port'], params['db_name'])
+                         (params['DB_DRIVER'], params['DB_USER'],
+                          password, params['DB_HOST'],
+                          params['DB_PORT'], params['DB_NAME'])
+        elif hasattr(self, 'DB_URL'):
+            self.__setattr__('db_url', self.DB_URL)
         else:
             # take the db configuration from 'self':
-            password = urlencode("", self.db_pass)[1:]
-            db_url = "%s@%s:%s@%s:%s/%s" % \
-                     (self.db_driver, self.db_user,
-                      password, self.db_host,
-                      self.db_port, self.db_name)
+            print(" -- orig password = ->%s<-" % self.DB_PASS)
+            password = urlencode({"": self.DB_PASS})[1:]
+            print(" -- password = ->%s<-" % password)
+            db_url = "%s://%s:%s@%s:%s/%s" % \
+                     (self.DB_DRIVER, self.DB_USER,
+                      password, self.DB_HOST,
+                      self.DB_PORT, self.DB_NAME)
+        print(" -- db_url: ", db_url)
+        self.__setattr__('db_url', db_url)
 
 
 config = Config()
