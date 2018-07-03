@@ -47,11 +47,12 @@ class User:
             self.is_active = False
 
     def login(self, username, password):
+        session['username'] = username
+        session['password'] = password
         self.username = username
-        data = None
-        if not self.is_active:
-             data = self.authenticate(self.auth_url, username, password)
-        # print("User.login(): data: ", data)
+        #data = None
+        #if not self.is_active:
+        data = self.authenticate(self.auth_url, username, password)
         if getattr(data, '_error_message', None):
             raise TaigaAuthException(data)
         else:
@@ -141,8 +142,13 @@ def user_factory(username):
        and will not be added to the session, or to 'g'.
     """
     result = None
-    # print("==> user_factory(%s) called" % username)
-    u = getattr(g, 'user', None)
+    u = None
+    if 'username' in session and 'password' in session:
+        u = User()
+        u.login(session['username'], session['password'])
+    else:
+        # print("==> user_factory(%s) called" % username)
+        u = getattr(g, 'user', None)
     if u:
         # print("g.user = ", g.user.name)
         if u.data['uuid'] == username:

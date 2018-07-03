@@ -78,9 +78,13 @@ class BaseTaigaClient:
 class TaigaGlobal(BaseTaigaClient):
 
     def autologin(self):
+        print("TaigaGlobal.autologin(): session = ", session)
         if not self.logged_in:
             # print("TaigaGlobal.get_projects(): session = ", session)
-            self.login(session['user_id'])
+            try:
+                self.login(session['user_id'])
+            except:
+                self.login(session['username'], session['password'])
 
     def get_projects(self):
         """get all projects visible to the user described by 'auth'"""
