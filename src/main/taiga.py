@@ -180,10 +180,27 @@ class TaigaGlobal(BaseTaigaClient):
         data = '{ "bulk_stories": [ %s ], "milestone_id": %s, '\
                '"project_id": %d }' % (", ".join(body), newsprint, int(pid))
         print("TaigaGlobal.reassign_userstories_and_close(): data = ", data)
-        r = super().post(self.api + '/userstories/bulk_update_milestone',
-                         data=data)
-        if r.status_code != 204:  # some error occurred
-            flash("Bulk user stories update failed.")
+        if sprintid != "null":
+            r = super().post(self.api + '/userstories/bulk_update_milestone',
+                            data=data)
+            if r.status_code != 204:  # some error occurred
+                flash("Bulk user stories update failed.")
+        else:
+            order = 0
+            import pdb; pdb.set_trace()
+            for shallow_us in usl:
+                us = super().get(self.api + "/userstories/%d" % shallow_us).json()
+                print("reassign_userstories_and_close(%d): user story: " % shallow_us, us)
+                patch_url = self.api + '/userstories/%d' % int(us['id'])
+                data='''{
+                    "backlog_order": %d,
+                    "milestone": null,
+                    "version": %d
+                }''' % (order, int(us['version']) + 1)
+                r = super().patch(patch_url, data=data)
+                if r.status_code != 204:  # some error occurred
+                    flash("Sending user story %d to backlog failed: %s" % (us['id'], r.reason))
+
         return r
 
 

@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from datetime import datetime as dt
+from sqlalchemy import or_
 from flask import session
 from flask import request
 from flask import current_app
@@ -16,11 +17,14 @@ from .libutils import calculate_ETAs
 from .libutils import get_user_uuid
 from .libutils import issues_waiting
 from .libutils import max_eta
+from .libutils import read_sprint_stats
+
 from .gantt import issues_gantt
 from .views import TemplateFinderViewBase
 from .model import Log
 from .model import SprintPoints
-from .model import db_session
+from .model import db
+
 
 class ProjectListView(TemplateFinderViewBase):
 
@@ -255,6 +259,7 @@ class ProjectSprintAdjustPointsView(TemplateFinderViewBase):
         api = current_app.config.get('API_URL')
         token = user.token
         tc = current_app.taiga_client
+
         tc.autologin()
         mst = tc.get_milestones(pid=pid, sprintid=sprintid)[0]
         context['sprintid'] = sprintid
@@ -278,15 +283,18 @@ class ProjectSprintAdjustPointsView(TemplateFinderViewBase):
         tc = current_app.taiga_client
         tc.autologin()
         now = dt.utcnow()
+        mst = tc.get_milestones(pid=pid, sprintid=sprintid)[0]
         if 'currentpoints' not in request.form:
             raise ValueError("Form submission corrupted")
         try:
             points = float(request.form['currentpoints'])
         except:
             points = 0.0
-        sp = db_session.query(SprintPoints).filter_by(sprintid=sprintid).first()
+        sp = db.session.query(SprintPoints).filter_by(sprintid=sprintid).first()
         if not sp:
-            sp = SprintPoints(sprintid=sprintid, who=user.name)
+            sp = SprintPoints(sprintid=sprintid,
+                              who=user.name,
+                              sprintname=mst.name)
         start_points = sp.start_points or "unset"
         current_points = sp.current_points or "unset"
         print("start points: ", start_points,
@@ -301,17 +309,58 @@ class ProjectSprintAdjustPointsView(TemplateFinderViewBase):
                 sprintid, user.name, points)
             print(" the user pressed the update button")
             sp.current_points = points
+        # fixup for our broken data set:
+        if (sp.start_points is None or sp.start_points == 0.0) and \
+           sp.current_points is not None:
+            sp.start_points = sp.current_points
         log = Log(timestamp=now, logentry=logentry)
-        db_session.add(sp)
-        db_session.add(log)
-        db_session.commit()
+        db.session.add(sp)
+        db.session.add(log)
+        db.session.commit()
         print("SprintPoints: ", sp)
-        mst = tc.get_milestones(pid=pid, sprintid=sprintid)[0]
         context['sprintid'] = sprintid
         context['sprintname'] = mst.name
         context['points'] = mst.total_points
-        context['start_points'] = start_points
-        context['cur_points'] = current_points
+        context['start_points'] = sp.start_points
+        context['cur_points'] = sp.current_points
         context['projectid'] = pid
+        response = make_response(self.render_template(context))
+        return response
+
+
+class ProjectSprintsStatsView(TemplateFinderViewBase):
+    """Generate graphs and tables out of the data delivered by the User
+       Stories Report
+    """
+
+    @login_required
+    def get(self, pid):
+        context = {}
+        user = None
+        try:
+            user = g.user
+        except:
+            c = get_user_uuid(request)
+            user = current_user(c)
+        api = current_app.config.get('API_URL')
+        tc = current_app.taiga_client
+        tc.autologin()
+        token = user.token
+        now = dt.utcnow()
+        cfg = current_app.config
+        # print("UserStoriesStatsView.get%d): config= " % pid, cfg)
+        url = cfg['REPORTS']['project'][pid]['userstories']
+        stats = read_sprint_stats(url)
+        # now match against the sprint data in our own database
+        db_sprints = []
+        clauses = []
+        for sprint in stats:
+            # print("sprint = ", sprint)
+            clauses.append(SprintPoints.sprintname==sprint)
+        print("clauses: ", clauses)
+        db_sprints = db.session.query(SprintPoints).filter(or_(*clauses)).all()
+        print("db_sprints: ", db_sprints)
+        context['pid'] = pid
+        context['sprints'] = stats.values()
         response = make_response(self.render_template(context))
         return response
