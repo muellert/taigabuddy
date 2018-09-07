@@ -116,3 +116,4 @@ tramp
 # cask packages
 .cask/
 
+.zcache/
