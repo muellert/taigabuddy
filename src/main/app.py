@@ -34,7 +34,7 @@ def create_app(config={}, environment=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config['ENVIRONMENT'] = environment
     if not app.config['SERVER_NAME']:
-        app.config['SERVER_NAME'] = 'localhost:5000'
+        app.config['SERVER_NAME'] = '127.0.0.1:5000'
     app.config.from_object(config)
     login_manager.init_app(app)
     try:
@@ -47,6 +47,7 @@ def create_app(config={}, environment=None):
 app = create_app(config=config)
 
 app.config['SECRET_KEY'] = "qeljq.48au8<F3>4aeh2liqb3hed,a i38<F4><F5>0<F5>"
+app.config['EXPLAIN_TEMPLATE_LOADING'] = True
 
 app.json_encoder = TBJsonEncoder
 
